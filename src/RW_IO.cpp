@@ -441,7 +441,7 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field)
 
 void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* ids, struct interpDensNet* idn, string cpuORgpu)
 {
-    string filename
+    string filename;
     // stream file to be opened and managed
     if (cpuORgpu == "cpu") {
         filename = "rhoe";
