@@ -567,7 +567,7 @@ __global__ void single_particle_kernel(
 }
 
 /** particle mover for GPU*/
-int mover_GPU_basic(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
+int mover_PC_GPU_basic(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
 {
     // print species and subcycling
     std::cout << "***GPU MOVER with SUBCYCLYING "<< param->n_sub_cycles << " - species " << part->species_ID << " ***" << std::endl;

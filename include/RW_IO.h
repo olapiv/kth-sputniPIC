@@ -15,6 +15,6 @@ void saveParameters(struct parameters*);
 
 void VTK_Write_Vectors(int, struct grid*, struct EMfield*);
 
-void VTK_Write_Scalars(int, struct grid*, struct interpDensSpecies*, struct interpDensNet*);
+void VTK_Write_Scalars(int, struct grid*, struct interpDensSpecies*, struct interpDensNet*, string cpuORgpu);
 
 #endif

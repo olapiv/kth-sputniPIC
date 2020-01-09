@@ -97,9 +97,10 @@ int main(int argc, char **argv){
         
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
-        for (int is=0; is < param.ns; is++)
+        for (int is=0; is < param.ns; is++) {
             mover_PC(&partCPU[is],&field,&grd,&param);  // Only partCPU is changed
-            mover_GPU_basic(&partGPU[is],&field,&grd,&param);
+            mover_PC_GPU_basic(&partGPU[is],&field,&grd,&param);
+        }
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
         
@@ -108,13 +109,15 @@ int main(int argc, char **argv){
         // interpolation particle to grid
         iInterp = cpuSecond(); // start timer for the interpolation step
         // interpolate species
-        for (int is=0; is < param.ns; is++)
+        for (int is=0; is < param.ns; is++) {
             interpP2G(&partCPU[is],&idsCPU[is],&grd);  // Only idsCPU is changed
             interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
+        }
         // apply BC to interpolated densities
-        for (int is=0; is < param.ns; is++)
+        for (int is=0; is < param.ns; is++) {
             applyBCids(&idsCPU[is],&grd,&param);  // Only idsCPU is changed
             applyBCids(&idsGPU[is],&grd,&param);
+        }
         // sum over species
         sumOverSpecies(&idnCPU,idsCPU,&grd,param.ns);  // Only idnCPU is changed
         sumOverSpecies(&idnGPU,idsGPU,&grd,param.ns);
@@ -126,7 +129,7 @@ int main(int argc, char **argv){
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
             VTK_Write_Vectors(cycle, &grd, &field);
-            
+
             VTK_Write_Scalars(cycle, &grd,idsCPU,&idnCPU, "cpu");
             VTK_Write_Scalars(cycle, &grd,idsGPU,&idnGPU, "gpu");
         }
@@ -140,15 +143,15 @@ int main(int argc, char **argv){
 
     float maxErrorIdsRhon = 0.0f;
     for (int is=0; is < param.ns; is++) {
-        for (register int i=0; i <grd->nxn; i++) {
-            for (register int j=0; j <grd->nyn; j++) {
-                for (register int k=0; k <grd->nzn; k++){        
+        for (register int i=0; i < grd.nxn; i++) {
+            for (register int j=0; j < grd.nyn; j++) {
+                for (register int k=0; k < grd.nzn; k++){        
 
                     maxErrorIdsRhon = fmax(maxErrorIdsRhon, fabs(
                         idsCPU[is].rhon[i][j][k] - 
                         idsGPU[is].rhon_flat[
-                            k * (grd->nxn + grd->nyn) +
-                            j * (grd->nxn) +
+                            k * ( grd.nxn + grd.nyn) +
+                            j * ( grd.nxn) +
                             i
                         ]
                     ));
@@ -161,14 +164,14 @@ int main(int argc, char **argv){
     std::cout << "Max error idsrhon: " << maxErrorIdsRhon << std::endl;
 
     float maxErrorIdnRhon = 0.0f;
-    for (register int i=0; i <grd->nxn; i++){
-        for (register int j=0; j <grd->nyn; j++){
-            for (register int k=0; k <grd->nzn; k++){
+    for (register int i=0; i < grd.nxn; i++){
+        for (register int j=0; j < grd.nyn; j++){
+            for (register int k=0; k < grd.nzn; k++){
                 maxErrorIdnRhon = fmax(maxErrorIdnRhon, fabs(
                     idnCPU.rhon[i][j][k] - 
                     idnCPU.rhon_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
+                        k * ( grd.nxn +  grd.nyn) +
+                        j * ( grd.nxn) +
                         i
                     ]
                 ));
