@@ -391,8 +391,14 @@ void interpP2G(struct particles* part, struct interpDensSpecies* ids, struct gri
 
 /** particle kernel */
 
-__global__ void single_particle_kernel(FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat, int nxn, int nyn, int nzn, double xStart, double yStart, double zStart, FPfield invdx, FPfield invdy, FPfield invdz, double Lx, double Ly, double Lz, FPfield invVOL, FPfield* Ex_flat, FPfield* Ey_flat, FPfield* Ez_flat, FPfield* Bxn_flat, FPfield* Byn_flat, FPfield* Bzn_flat, bool PERIODICX, bool PERIODICY, bool PERIODICZ, FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2, int NiterMover, int npmax)
-{
+__global__ void single_particle_kernel(
+    FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat, 
+    int nxn, int nyn, int nzn, double xStart, double yStart, double zStart, FPfield invdx, FPfield invdy, FPfield invdz, double Lx, double Ly, double Lz, FPfield invVOL, 
+    FPfield* Ex_flat, FPfield* Ey_flat, FPfield* Ez_flat, FPfield* Bxn_flat, FPfield* Byn_flat, FPfield* Bzn_flat, 
+    bool PERIODICX, bool PERIODICY, bool PERIODICZ, 
+    FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2, 
+    int NiterMover, int npmax
+){
     
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -630,7 +636,14 @@ int mover_GPU_basic(struct particles* part, struct EMfield* field, struct grid* 
 
         // Call GPU kernel
 
-        single_particle_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>(x_dev, y_dev, z_dev,u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->Lx, grd->Ly, grd->Lz, grd->invVOL, Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, param->PERIODICX, param->PERIODICY, param->PERIODICZ, dt_sub_cycling, dto2, qomdt2, part->NiterMover, part->nop);
+        single_particle_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>(
+            x_dev, y_dev, z_dev,u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
+            grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->Lx, grd->Ly, grd->Lz, grd->invVOL, 
+            Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, 
+            param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
+            dt_sub_cycling, dto2, qomdt2, 
+            part->NiterMover, part->nop
+        );
 
         cudaDeviceSynchronize();
 

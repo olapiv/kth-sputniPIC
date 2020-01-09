@@ -57,24 +57,28 @@ int main(int argc, char **argv){
     
     // Allocate Interpolated Quantities
     // per species
-    interpDensSpecies *ids = new interpDensSpecies[param.ns];
+    interpDensSpecies *idsCPU = new interpDensSpecies[param.ns];
+    interpDensSpecies *idsGPU = new interpDensSpecies[param.ns];
     for (int is=0; is < param.ns; is++)
-        interp_dens_species_allocate(&grd,&ids[is],is);
+        interp_dens_species_allocate(&grd,&idsCPU[is],is);
     // Net densities
-    interpDensNet idn;
-    interp_dens_net_allocate(&grd,&idn);
+    interpDensNet idnCPU;
+    interpDensNet idnGPU;
+    interp_dens_net_allocate(&grd,&idnCPU);
     
     // Allocate Particles
-    particles *part = new particles[param.ns];
+    particles *partCPU = new particles[param.ns];
+    particles *partGPU = new particles[param.ns];
     // allocation
     for (int is=0; is < param.ns; is++){
-        particle_allocate(&param,&part[is],is);
+        particle_allocate(&param,&partCPU[is],is);
+        particle_allocate(&param,&partGPU[is],is);
     }
     
     // Initialization
-    initGEM(&param,&grd,&field,&field_aux,part,ids);
-    
-    
+    initGEM(&param,&grd,&field,&field_aux,partCPU,idsCPU);
+    initGEM(&param,&grd,&field,&field_aux,partGPU,idsGPU);  // TODO: Might have to create fieldCPU, etc. for this
+
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
     // **********************************************************//
@@ -86,15 +90,16 @@ int main(int argc, char **argv){
         std::cout << "***********************" << std::endl;
     
         // set to zero the densities - needed for interpolation
-        setZeroDensities(&idn,ids,&grd,param.ns);
+        setZeroDensities(&idnCPU,idsCPU,&grd,param.ns);  // Only idnCPU & idsCPU is changed
+        setZeroDensities(&idnGPU,idsGPU,&grd,param.ns);
         
         
         
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++)
-            //mover_PC(&part[is],&field,&grd,&param);
-            mover_GPU_basic(&part[is],&field,&grd,&param);
+            mover_PC(&partCPU[is],&field,&grd,&param);  // Only partCPU is changed
+            mover_GPU_basic(&partGPU[is],&field,&grd,&param);
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
         
@@ -104,41 +109,90 @@ int main(int argc, char **argv){
         iInterp = cpuSecond(); // start timer for the interpolation step
         // interpolate species
         for (int is=0; is < param.ns; is++)
-            //interpP2G(&part[is],&ids[is],&grd);
-            interpP2G_GPU_basic(&part[is],&ids[is],&grd);
+            interpP2G(&partCPU[is],&idsCPU[is],&grd);  // Only idsCPU is changed
+            interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
         // apply BC to interpolated densities
         for (int is=0; is < param.ns; is++)
-            applyBCids(&ids[is],&grd,&param);
+            applyBCids(&idsCPU[is],&grd,&param);  // Only idsCPU is changed
+            applyBCids(&idsGPU[is],&grd,&param);
         // sum over species
-        sumOverSpecies(&idn,ids,&grd,param.ns);
+        sumOverSpecies(&idnCPU,idsCPU,&grd,param.ns);  // Only idnCPU is changed
+        sumOverSpecies(&idnGPU,idsGPU,&grd,param.ns);
         // interpolate charge density from center to node
-        applyBCscalarDensN(idn.rhon,&grd,&param);
-        
-        
+        applyBCscalarDensN(idnCPU.rhon,&grd,&param);  // Only idnCPU is changed
+        applyBCscalarDensN(idnGPU.rhon,&grd,&param);
+    
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
-            VTK_Write_Vectors(cycle, &grd,&field);
-            VTK_Write_Scalars(cycle, &grd,ids,&idn);
+            VTK_Write_Vectors(cycle, &grd, &field);
+            
+            VTK_Write_Scalars(cycle, &grd,idsCPU,&idnCPU, "cpu");
+            VTK_Write_Scalars(cycle, &grd,idsGPU,&idnGPU, "gpu");
         }
         
         eInterp += (cpuSecond() - iInterp); // stop timer for interpolation
         
-        
     
     }  // end of one PIC cycle
+
+    // ------COMPARING RESULTS, OWN CODE--------
+
+    float maxErrorIdsRhon = 0.0f;
+    for (int is=0; is < param.ns; is++) {
+        for (register int i=0; i <grd->nxn; i++) {
+            for (register int j=0; j <grd->nyn; j++) {
+                for (register int k=0; k <grd->nzn; k++){        
+
+                    maxErrorIdsRhon = fmax(maxErrorIdsRhon, fabs(
+                        idsCPU[is].rhon[i][j][k] - 
+                        idsGPU[is].rhon_flat[
+                            k * (grd->nxn + grd->nyn) +
+                            j * (grd->nxn) +
+                            i
+                        ]
+                    ));
+
+                    // TODO: Implement more constants here
+                }
+            }
+        }
+    }
+    std::cout << "Max error idsrhon: " << maxErrorIdsRhon << std::endl;
+
+    float maxErrorIdnRhon = 0.0f;
+    for (register int i=0; i <grd->nxn; i++){
+        for (register int j=0; j <grd->nyn; j++){
+            for (register int k=0; k <grd->nzn; k++){
+                maxErrorIdnRhon = fmax(maxErrorIdnRhon, fabs(
+                    idnCPU.rhon[i][j][k] - 
+                    idnCPU.rhon_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ]
+                ));
+
+                // TODO: Implement more constants here
+            }
+        }
+    }
+    std::cout << "Max error idnrhon: " << maxErrorIdnRhon << std::endl;
+
+    // ---------------- 
+
     
     /// Release the resources
     // deallocate field
     grid_deallocate(&grd);
     field_deallocate(&grd,&field);
     // interp
-    interp_dens_net_deallocate(&grd,&idn);
+    interp_dens_net_deallocate(&grd,&idnCPU);
     
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
-        interp_dens_species_deallocate(&grd,&ids[is]);
-        particle_deallocate(&part[is]);
+        interp_dens_species_deallocate(&grd,&idsCPU[is]);
+        particle_deallocate(&partCPU[is]);
     }
     
     

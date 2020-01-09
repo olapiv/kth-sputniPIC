@@ -438,10 +438,15 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field)
     
 }
 
-void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* ids, struct interpDensNet* idn)
+
+void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* ids, struct interpDensNet* idn, string cpuORgpu)
 {
     // stream file to be opened and managed
-    string filename = "rhoe";
+    if cpuORgpu == "cpu" {
+        string filename = "rhoe";
+    } else {
+        string filename = "rhoe_gpu";
+    }
     string temp;
     std::stringstream cc;
     cc << cycle;
@@ -470,16 +475,26 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     my_file << "POINT_DATA " << (nxn-3)*(nyn-3)*(nzn-3) << std::endl;
     my_file << "SCALARS rhoe float" << std::endl;
     my_file << "LOOKUP_TABLE default" << std::endl;
-    
-    for (int k=1; k < nzn-2; k++)
-      for (int j=1; j < nyn-2; j++)
-        for (int i=1; i < nxn-2; i++){
-            my_file << ids[0].rhon[i][j][k] << std::endl;
+
+    for (int k=1; k < nzn-2; k++) {
+        for (int j=1; j < nyn-2; j++) {
+            for (int i=1; i < nxn-2; i++){
+                if cpuORgpu == "cpu" {
+                    my_file << ids[0].rhon[i][j][k] << std::endl;
+                } else {
+                    my_file << ids[0].rhon_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ] << std::endl;
+                }
+            }
         }
+    }
     
     my_file.close();
     
-    filename = "rhoi";
+    filename = "rhoi_gpu";
     temp = "./data/" + filename + "_"+ cc.str() ;
     temp += ".vtk";
     std::cout << "Opening file: " << temp << std::endl;
@@ -495,11 +510,22 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     my_file2 << "SCALARS rhoi float" << std::endl;
     my_file2 << "LOOKUP_TABLE default" << std::endl;
     
-    for (int k=1; k < nzn-2; k++)
-      for (int j=1; j < nyn-2; j++)
-        for (int i=1; i < nxn-2; i++){
-            my_file2 << ids[1].rhon[i][j][k] << std::endl;
+    for (int k=1; k < nzn-2; k++) {
+        for (int j=1; j < nyn-2; j++) {
+            for (int i=1; i < nxn-2; i++){
+                if cpuORgpu == "cpu" {
+                    my_file2 << ids[1].rhon[i][j][k] << std::endl;
+                } else {
+                    my_file2 << ids[1].rhon_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ] << std::endl;
+                }
+            }
         }
+    }
+
     
     my_file2.close();
     
@@ -519,11 +545,21 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     my_file1 << "SCALARS rhonet float" << std::endl;
     my_file1 << "LOOKUP_TABLE default" << std::endl;
     
-    for (int k=1; k < nzn-2; k++)
-      for (int j=1; j < nyn-2; j++)
-        for (int i=1; i < nxn-2; i++){
-            my_file1 << idn->rhon[i][j][k]  << std::endl;
+    for (int k=1; k < nzn-2; k++) {
+        for (int j=1; j < nyn-2; j++) {
+            for (int i=1; i < nxn-2; i++) {
+                if cpuORgpu == "cpu" {
+                    my_file1 << idn->rhon[i][j][k]  << std::endl;
+                } else {
+                    my_file1 << idn.rhon_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ] << std::endl;
+                }
+            }
         }
+    }
     
     my_file1.close();
     
