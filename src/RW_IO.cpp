@@ -425,7 +425,11 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field, strin
     
     my_fileE.close();
     
-    filename = "B";
+    if (cpuORgpu == "cpu") {
+        filename = "B";
+    } else {
+        filename = "B_gpu";
+    }
     temp = "./data/" + filename + "_"+ cc.str() ;
     temp += ".vtk";
     std::cout << "Opening file: " << temp << std::endl;
@@ -537,7 +541,11 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     
     my_file.close();
     
-    filename = "rhoi_gpu";
+    if (cpuORgpu == "cpu") {
+        filename = "rhoi";
+    } else {
+        filename = "rhoi_gpu";
+    }
     temp = "./data/" + filename + "_"+ cc.str() ;
     temp += ".vtk";
     std::cout << "Opening file: " << temp << std::endl;
@@ -572,7 +580,11 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     
     my_file2.close();
     
-    filename = "rho_net";
+    if (cpuORgpu == "cpu") {
+        filename = "rho_net";
+    } else {
+        filename = "rho_net_gpu";
+    }
     temp = "./data/" + filename + "_"+ cc.str() ;
     temp += ".vtk";
     std::cout << "Opening file: " << temp << std::endl;
