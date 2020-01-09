@@ -43,6 +43,7 @@ int main(int argc, char **argv){
     // Timing variables
     double iStart = cpuSecond();
     double iMover, iInterp, eMover = 0.0, eInterp= 0.0;
+    // double iMoverGPU, iInterpGPU, eMoverGPU = 0.0, eInterp= 0.0;
     
     // Set-up the grid information
     grid grd;
@@ -173,24 +174,42 @@ int main(int argc, char **argv){
     }
     std::cout << "Max error idsrhon: " << maxErrorIdsRhon << std::endl;
 
+    float valueFlat;
+    float sumIdnRhon = 0.0f;
+    float sumIdnRhonFlat = 0.0f;
+    float avgIdnRhon = 0.0f;
+    float avgIdnRhonFlat = 0.0f;
+
+    float errorIdnRhon = 0.0f;
     float maxErrorIdnRhon = 0.0f;
+    float sumErrorIdnRhon = 0.0f;
     for (register int i=0; i < grd.nxn; i++){
         for (register int j=0; j < grd.nyn; j++){
             for (register int k=0; k < grd.nzn; k++){
-                maxErrorIdnRhon = fmax(maxErrorIdnRhon, fabs(
-                    idnCPU.rhon[i][j][k] - 
-                    idnCPU.rhon_flat[
-                        k * ( grd.nxn +  grd.nyn) +
-                        j * ( grd.nxn) +
-                        i
-                    ]
-                ));
+                valueFlat = idnCPU.rhon_flat[
+                    k * ( grd.nxn +  grd.nyn) +
+                    j * ( grd.nxn) +
+                    i
+                ];
+
+                sumIdnRhon =+ idnCPU.rhon[i][j][k];
+                sumIdnRhonFlat =+ valueFlat;
+
+                errorIdnRhon = fabs(idnCPU.rhon[i][j][k] - valueFlat);
+                maxErrorIdnRhon = fmax(maxErrorIdnRhon, errorIdnRhon);
+                sumErrorIdnRhon =+ errorIdnRhon;
 
                 // TODO: Implement more constants here
             }
         }
     }
+    avgIdnRhon = sumIdnRhon / (grd.nxn * grd.nyn * grd.nzn);
+    avgIdnRhonFlat = sumIdnRhonFlat / (grd.nxn * grd.nyn * grd.nzn);
+    std::cout << "Avg idnrhon: " << avgIdnRhon << std::endl;
+    std::cout << "Avg idnrhonFlat: " << avgIdnRhonFlat << std::endl;
+
     std::cout << "Max error idnrhon: " << maxErrorIdnRhon << std::endl;
+    std::cout << "Avg error idnrhon: " << sumErrorIdnRhon / (grd.nxn * grd.nyn * grd.nzn) << std::endl;
 
     // ---------------- 
 
