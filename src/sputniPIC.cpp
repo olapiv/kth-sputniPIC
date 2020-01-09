@@ -49,10 +49,14 @@ int main(int argc, char **argv){
     setGrid(&param, &grd);
     
     // Allocate Fields
-    EMfield field;
-    field_allocate(&grd,&field);
-    EMfield_aux field_aux;
-    field_aux_allocate(&grd,&field_aux);
+    EMfield fieldCPU;
+    EMfield fieldGPU;
+    field_allocate(&grd,&fieldCPU);
+    field_allocate(&grd,&fieldGPU);
+    EMfield_aux field_auxCPU;
+    EMfield_aux field_auxGPU;
+    field_aux_allocate(&grd,&field_auxCPU);
+    field_aux_allocate(&grd,&field_auxGPU);
     
     
     // Allocate Interpolated Quantities
@@ -76,8 +80,10 @@ int main(int argc, char **argv){
     }
     
     // Initialization
-    initGEM(&param,&grd,&field,&field_aux,partCPU,idsCPU);
-    initGEM(&param,&grd,&field,&field_aux,partGPU,idsGPU);  // TODO: Might have to create fieldCPU, etc. for this
+    initGEM(&param,&grd,&fieldCPU,&field_auxCPU,partCPU,idsCPU);  // Changes fieldCPU, field_auxCPU, partCPU, idsCPU
+    initGEM(&param,&grd,&fieldGPU,&field_auxGPU,partGPU,idsGPU);
+
+    std::cout << " STARTING SIMULATION " << std::endl;
 
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
@@ -98,8 +104,8 @@ int main(int argc, char **argv){
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++) {
-            mover_PC(&partCPU[is],&field,&grd,&param);  // Only partCPU is changed
-            mover_PC_GPU_basic(&partGPU[is],&field,&grd,&param);
+            mover_PC(&partCPU[is],&fieldCPU,&grd,&param);  // Only partCPU is changed
+            mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
         }
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
@@ -128,7 +134,8 @@ int main(int argc, char **argv){
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
-            VTK_Write_Vectors(cycle, &grd, &field);
+            VTK_Write_Vectors(cycle, &grd, &fieldCPU, "cpu");
+            VTK_Write_Vectors(cycle, &grd, &fieldGPU, "gpu");
 
             VTK_Write_Scalars(cycle, &grd,idsCPU,&idnCPU, "cpu");
             VTK_Write_Scalars(cycle, &grd,idsGPU,&idnGPU, "gpu");
@@ -188,7 +195,8 @@ int main(int argc, char **argv){
     /// Release the resources
     // deallocate field
     grid_deallocate(&grd);
-    field_deallocate(&grd,&field);
+    field_deallocate(&grd,&fieldCPU);
+    field_deallocate(&grd,&fieldGPU);
     // interp
     interp_dens_net_deallocate(&grd,&idnCPU);
     

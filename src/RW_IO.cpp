@@ -351,10 +351,15 @@ void saveParameters(struct parameters* param)
 }
 
 
-void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field)
+void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field, string cpuORgpu)
 {
     // stream file to be opened and managed
-    string filename = "E";
+    string filename;
+    if (cpuORgpu == "cpu") {
+        filename = "E";
+    } else {
+        filename = "E_gpu";
+    }
     string temp;
     std::stringstream cc;
     cc << cycle;
@@ -383,21 +388,40 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field)
     
     double Ex = 0, Ey = 0, Ez = 0;
     
-    
     for (int k=1; k < nzn-2; k++)
-      for (int j=1; j < nyn-2; j++)
-        for (int i=1; i < nxn-2; i++){
-            Ex = field->Ex[i][j][k];
-            if (fabs(Ex) < 1E-8)
-                Ex = 0.0;
-            Ey = field->Ey[i][j][k];
-            if (fabs(Ey) < 1E-8)
-                Ey = 0.0;
-            Ez = field->Ez[i][j][k];
-            if (fabs(Ez) < 1E-8)
-                Ez = 0.0;
-            my_fileE << Ex << " " << Ey <<  " " << Ez <<  std::endl;
+        for (int j=1; j < nyn-2; j++)
+            for (int i=1; i < nxn-2; i++){
+                if (cpuORgpu == "cpu") {
+                    Ex = field->Ex[i][j][k];
+                    Ey = field->Ey[i][j][k];
+                    Ez = field->Ez[i][j][k];
+                } else {
+                    Ex = field->Ex_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ];
+                    Ey = field->Ey_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ];
+                    Ez = field->Ez_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ];
+                }
+                if (fabs(Ex) < 1E-8)
+                    Ex = 0.0;
+                if (fabs(Ey) < 1E-8)
+                    Ey = 0.0;
+                if (fabs(Ez) < 1E-8)
+                    Ez = 0.0;
+                my_fileE << Ex << " " << Ey <<  " " << Ez <<  std::endl;
+            }
         }
+    }
     
     my_fileE.close();
     
@@ -420,19 +444,37 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field)
     double Bx = 0, By = 0, Bz = 0;
     
     for (int k=1; k < nzn-2; k++)
-       for (int j=1; j < nyn-2; j++)
-        for (int i=1; i < nxn-2; i++){
-            Bx = field->Bxn[i][j][k];
-            if (fabs(Bx) < 1E-8)
-                Bx = 0.0;
-            By = field->Byn[i][j][k];
-            if (fabs(By) < 1E-8)
-                By = 0.0;
-            Bz = field->Bzn[i][j][k];
-            if (fabs(Bz) < 1E-8)
-                Bz = 0.0;
-            my_file2 << Bx << " " << By  <<  " " << Bz <<  std::endl;
-        }
+        for (int j=1; j < nyn-2; j++)
+            for (int i=1; i < nxn-2; i++){
+                if (cpuORgpu == "cpu") {
+                    Bx = field->Bxn[i][j][k];
+                    By = field->Byn[i][j][k];
+                    Bz = field->Bzn[i][j][k];
+                } else {
+                    Bx = field->Bxn_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ];
+                    Bx = field->Byn_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ];
+                    Bx = field->Bzn_flat[
+                        k * (grd->nxn + grd->nyn) +
+                        j * (grd->nxn) +
+                        i
+                    ];
+                }
+                if (fabs(Bx) < 1E-8)
+                    Bx = 0.0;
+                if (fabs(By) < 1E-8)
+                    By = 0.0;
+                if (fabs(Bz) < 1E-8)
+                    Bz = 0.0;
+                my_file2 << Bx << " " << By  <<  " " << Bz <<  std::endl;
+            }
     
     my_file2.close();
     
