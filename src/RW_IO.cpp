@@ -388,8 +388,8 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field, strin
     
     double Ex = 0, Ey = 0, Ez = 0;
     
-    for (int k=1; k < nzn-2; k++)
-        for (int j=1; j < nyn-2; j++)
+    for (int k=1; k < nzn-2; k++){
+        for (int j=1; j < nyn-2; j++){
             for (int i=1; i < nxn-2; i++){
                 if (cpuORgpu == "cpu") {
                     Ex = field->Ex[i][j][k];
