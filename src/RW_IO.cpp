@@ -441,11 +441,12 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field)
 
 void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* ids, struct interpDensNet* idn, string cpuORgpu)
 {
+    string filename
     // stream file to be opened and managed
-    if cpuORgpu == "cpu" {
-        string filename = "rhoe";
+    if (cpuORgpu == "cpu") {
+        filename = "rhoe";
     } else {
-        string filename = "rhoe_gpu";
+        filename = "rhoe_gpu";
     }
     string temp;
     std::stringstream cc;
@@ -479,7 +480,7 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     for (int k=1; k < nzn-2; k++) {
         for (int j=1; j < nyn-2; j++) {
             for (int i=1; i < nxn-2; i++){
-                if cpuORgpu == "cpu" {
+                if (cpuORgpu == "cpu") {
                     my_file << ids[0].rhon[i][j][k] << std::endl;
                 } else {
                     my_file << ids[0].rhon_flat[
@@ -513,7 +514,7 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     for (int k=1; k < nzn-2; k++) {
         for (int j=1; j < nyn-2; j++) {
             for (int i=1; i < nxn-2; i++){
-                if cpuORgpu == "cpu" {
+                if (cpuORgpu == "cpu") {
                     my_file2 << ids[1].rhon[i][j][k] << std::endl;
                 } else {
                     my_file2 << ids[1].rhon_flat[
@@ -548,10 +549,10 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     for (int k=1; k < nzn-2; k++) {
         for (int j=1; j < nyn-2; j++) {
             for (int i=1; i < nxn-2; i++) {
-                if cpuORgpu == "cpu" {
+                if (cpuORgpu == "cpu") {
                     my_file1 << idn->rhon[i][j][k]  << std::endl;
                 } else {
-                    my_file1 << idn.rhon_flat[
+                    my_file1 << idn->rhon_flat[
                         k * (grd->nxn + grd->nyn) +
                         j * (grd->nxn) +
                         i
