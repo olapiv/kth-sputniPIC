@@ -63,12 +63,15 @@ int main(int argc, char **argv){
     // per species
     interpDensSpecies *idsCPU = new interpDensSpecies[param.ns];
     interpDensSpecies *idsGPU = new interpDensSpecies[param.ns];
-    for (int is=0; is < param.ns; is++)
-        interp_dens_species_allocate(&grd,&idsCPU[is],is);
+    for (int is=0; is < param.ns; is++) {
+        interp_dens_species_allocate(&grd,&idsCPU[is],is);  // Only changes idsCPU
+        interp_dens_species_allocate(&grd,&idsGPU[is],is);
+    }
     // Net densities
     interpDensNet idnCPU;
     interpDensNet idnGPU;
-    interp_dens_net_allocate(&grd,&idnCPU);
+    interp_dens_net_allocate(&grd,&idnCPU);  // Only changes idnCPU
+    interp_dens_net_allocate(&grd,&idnGPU);
     
     // Allocate Particles
     particles *partCPU = new particles[param.ns];
