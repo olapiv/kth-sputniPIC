@@ -151,20 +151,17 @@ int main(int argc, char **argv){
     }  // end of one PIC cycle
 
     // ------COMPARING RESULTS, OWN CODE--------
+    int flat_idx = 0;
 
     float maxErrorIdsRhon = 0.0f;
     for (int is=0; is < param.ns; is++) {
         for (register int i=0; i < grd.nxn; i++) {
             for (register int j=0; j < grd.nyn; j++) {
                 for (register int k=0; k < grd.nzn; k++){        
-
+                    flat_idx = get_idx(i, j, k, nyn, nzn);
                     maxErrorIdsRhon = fmax(maxErrorIdsRhon, fabs(
                         idsCPU[is].rhon[i][j][k] - 
-                        idsGPU[is].rhon_flat[
-                            k * ( grd.nxn + grd.nyn) +
-                            j * ( grd.nxn) +
-                            i
-                        ]
+                        idsGPU[is].rhon_flat[flat_idx]
                     ));
 
                     // TODO: Implement more constants here
@@ -186,11 +183,8 @@ int main(int argc, char **argv){
     for (register int i=0; i < grd.nxn; i++){
         for (register int j=0; j < grd.nyn; j++){
             for (register int k=0; k < grd.nzn; k++){
-                valueFlat = idnCPU.rhon_flat[
-                    k * ( grd.nxn +  grd.nyn) +
-                    j * ( grd.nxn) +
-                    i
-                ];
+                flat_idx = get_idx(i, j, k, nyn, nzn);
+                valueFlat = idnCPU.rhon_flat[flat_idx];
 
                 sumIdnRhon =+ idnCPU.rhon[i][j][k];
                 sumIdnRhonFlat =+ valueFlat;
