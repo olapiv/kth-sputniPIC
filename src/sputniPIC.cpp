@@ -30,6 +30,8 @@
 // Read and output operations
 #include "RW_IO.h"
 
+#include "CompareValues.h"
+
 
 int main(int argc, char **argv){
     
@@ -42,8 +44,8 @@ int main(int argc, char **argv){
     
     // Timing variables
     double iStart = cpuSecond();
-    double iMover, iInterp, eMover = 0.0, eInterp= 0.0;
-    // double iMoverGPU, iInterpGPU, eMoverGPU = 0.0, eInterp= 0.0;
+    double iMoverCPU, iInterpCPU, eMoverCPU = 0.0, eInterpCPU= 0.0;
+    double iMoverGPU, iInterpGPU, eMoverGPU = 0.0, eInterpGPU= 0.0;
     
     // Set-up the grid information
     grid grd;
@@ -90,7 +92,9 @@ int main(int argc, char **argv){
     std::cout << " STARTING SIMULATION " << std::endl;
 
     // **********************************************************//
+    // **** CPU CPU CPU CPU  *** //
     // **** Start the Simulation!  Cycle index start from 1  *** //
+    // **** CPU CPU CPU CPU  *** //
     // **********************************************************//
     for (int cycle = param.first_cycle_n; cycle < (param.first_cycle_n + param.ncycles); cycle++) {
         
@@ -101,135 +105,115 @@ int main(int argc, char **argv){
     
         // set to zero the densities - needed for interpolation
         setZeroDensities(&idnCPU,idsCPU,&grd,param.ns);  // Only idnCPU & idsCPU is changed
-        setZeroDensities(&idnGPU,idsGPU,&grd,param.ns);
-        
-        
         
         // implicit mover
-        iMover = cpuSecond(); // start timer for mover
+        iMoverCPU = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++) {
             mover_PC(&partCPU[is],&fieldCPU,&grd,&param);  // Only partCPU is changed
-            mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
         }
-        eMover += (cpuSecond() - iMover); // stop timer for mover
-        
-        
-        
+        eMoverCPU += (cpuSecond() - iMoverCPU); // stop timer for mover
         
         // interpolation particle to grid
-        iInterp = cpuSecond(); // start timer for the interpolation step
+        iInterpCPU = cpuSecond(); // start timer for the interpolation step
         // interpolate species
         for (int is=0; is < param.ns; is++) {
             interpP2G(&partCPU[is],&idsCPU[is],&grd);  // Only idsCPU is changed
-            interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
         }
         // apply BC to interpolated densities
         for (int is=0; is < param.ns; is++) {
             applyBCids(&idsCPU[is],&grd,&param);  // Only idsCPU is changed
-            applyBCids(&idsGPU[is],&grd,&param);
         }
         // sum over species
         sumOverSpecies(&idnCPU,idsCPU,&grd,param.ns);  // Only idnCPU is changed
-        sumOverSpecies(&idnGPU,idsGPU,&grd,param.ns);
         // interpolate charge density from center to node
         applyBCscalarDensN(idnCPU.rhon,&grd,&param);  // Only idnCPU is changed
-        applyBCscalarDensN(idnGPU.rhon,&grd,&param);
     
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
             VTK_Write_Vectors(cycle, &grd, &fieldCPU, "cpu");
-            VTK_Write_Vectors(cycle, &grd, &fieldGPU, "gpu");
-
             VTK_Write_Scalars(cycle, &grd,idsCPU,&idnCPU, "cpu");
-            VTK_Write_Scalars(cycle, &grd,idsGPU,&idnGPU, "gpu");
         }
         
-        eInterp += (cpuSecond() - iInterp); // stop timer for interpolation
-        
+        eInterpCPU += (cpuSecond() - iInterpCPU); // stop timer for interpolation
     
     }  // end of one PIC cycle
 
-    // ------COMPARING RESULTS, OWN CODE--------
-    int flat_idx = 0;
-    int nxn = grd.nxn;
-    int nyn = grd.nyn;
-    int nzn = grd.nzn;
-
-    float maxErrorIdsRhon = 0.0f;
-    for (int is=0; is < param.ns; is++) {
-        for (register int i=0; i < nxn; i++) {
-            for (register int j=0; j < nyn; j++) {
-                for (register int k=0; k < nzn; k++){        
-                    flat_idx = get_idx(i, j, k, nyn, nzn);
-                    maxErrorIdsRhon = fmax(maxErrorIdsRhon, fabs(
-                        idsCPU[is].rhon[i][j][k] - 
-                        idsGPU[is].rhon_flat[flat_idx]
-                    ));
-
-                    // TODO: Implement more constants here
-                }
-            }
+    // **********************************************************//
+    // **** GPU GPU GPU GPU  *** //
+    // **** Start the Simulation!  Cycle index start from 1  *** //
+    // **** GPU GPU GPU GPU  *** //
+    // **********************************************************//
+    for (int cycle = param.first_cycle_n; cycle < (param.first_cycle_n + param.ncycles); cycle++) {
+        
+        std::cout << std::endl;
+        std::cout << "***********************" << std::endl;
+        std::cout << "   cycle = " << cycle << std::endl;
+        std::cout << "***********************" << std::endl;
+    
+        // set to zero the densities - needed for interpolation
+        setZeroDensities(&idnGPU,idsGPU,&grd,param.ns);
+        
+        // implicit mover
+        iMoverGPU = cpuSecond(); // start timer for mover
+        for (int is=0; is < param.ns; is++) {
+            mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
         }
-    }
-    std::cout << "Max error idsrhon: " << maxErrorIdsRhon << std::endl;
-    std::cout << "------------" << std::endl;
-
-    float valueFlat;
-    float sumIdnRhon = 0.0f;
-    float sumIdnRhonFlat = 0.0f;
-    float avgIdnRhon = 0.0f;
-    float avgIdnRhonFlat = 0.0f;
-
-    float errorIdnRhon = 0.0f;
-    float maxErrorIdnRhon = 0.0f;
-    float sumErrorIdnRhon = 0.0f;
-    for (register int i=0; i < nxn; i++){
-        for (register int j=0; j < nyn; j++){
-            for (register int k=0; k < nzn; k++){
-                flat_idx = get_idx(i, j, k, nyn, nzn);
-                valueFlat = idnCPU.rhon_flat[flat_idx];
-
-                sumIdnRhon =+ idnCPU.rhon[i][j][k];
-                sumIdnRhonFlat =+ valueFlat;
-
-                errorIdnRhon = fabs(idnCPU.rhon[i][j][k] - valueFlat);
-                maxErrorIdnRhon = fmax(maxErrorIdnRhon, errorIdnRhon);
-                sumErrorIdnRhon =+ errorIdnRhon;
-
-                // TODO: Implement more constants here
-            }
+        eMoverGPU += (cpuSecond() - iMoverGPU); // stop timer for mover
+        
+        // interpolation particle to grid
+        iInterpGPU = cpuSecond(); // start timer for the interpolation step
+        // interpolate species
+        for (int is=0; is < param.ns; is++) {
+            interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
         }
-    }
-    avgIdnRhon = sumIdnRhon / (nxn * nyn * nzn);
-    avgIdnRhonFlat = sumIdnRhonFlat / (nxn * nyn * nzn);
-    std::cout << "Avg idnrhon: " << avgIdnRhon << std::endl;
-    std::cout << "Avg idnrhonFlat: " << avgIdnRhonFlat << std::endl;
+        // apply BC to interpolated densities
+        for (int is=0; is < param.ns; is++) {
+            applyBCids(&idsGPU[is],&grd,&param);
+        }
+        // sum over species
+        sumOverSpecies(&idnGPU,idsGPU,&grd,param.ns);
+        // interpolate charge density from center to node
+        applyBCscalarDensN(idnGPU.rhon,&grd,&param);
+    
+        
+        // write E, B, rho to disk
+        if (cycle%param.FieldOutputCycle==0){
+            VTK_Write_Vectors(cycle, &grd, &fieldGPU, "gpu");
+            VTK_Write_Scalars(cycle, &grd,idsGPU,&idnGPU, "gpu");
+        }
+        
+        eInterpGPU += (cpuSecond() - iInterpGPU); // stop timer for interpolation
+    
+    }  // end of one PIC cycle
 
-    std::cout << "Max error idnrhon: " << maxErrorIdnRhon << std::endl;
-    std::cout << "Avg error idnrhon: " << sumErrorIdnRhon / (nxn * nyn * nzn) << std::endl;
-
-    // ---------------- 
-
+    compareValues(grd, idsGPU, idsCPU);
     
     /// Release the resources
     // deallocate field
     grid_deallocate(&grd);
+
+    // **************************//
+    // **** Deallocate CPU  *** //
+    // **************************//
     field_deallocate(&grd,&fieldCPU);
-    field_deallocate(&grd,&fieldGPU);
-    
-    interp_dens_net_deallocate(&grd,&idnGPU);
     interp_dens_net_deallocate(&grd,&idnCPU);
-    
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
         interp_dens_species_deallocate(&grd,&idsCPU[is]);
         particle_deallocate(&partCPU[is]);
+    }
 
+    // **************************//
+    // **** Deallocate GPU  *** //
+    // **************************//
+    field_deallocate(&grd,&fieldGPU);
+    interp_dens_net_deallocate(&grd,&idnGPU);
+    // Deallocate interpolated densities and particles
+    for (int is=0; is < param.ns; is++){
         interp_dens_species_deallocate(&grd,&idsGPU[is]);
         particle_deallocate(&partGPU[is]);
     }
-    
     
     // stop timer
     double iElaps = cpuSecond() - iStart;
@@ -238,8 +222,13 @@ int main(int argc, char **argv){
     std::cout << std::endl;
     std::cout << "**************************************" << std::endl;
     std::cout << "   Tot. Simulation Time (s) = " << iElaps << std::endl;
-    std::cout << "   Mover Time / Cycle   (s) = " << eMover/param.ncycles << std::endl;
-    std::cout << "   Interp. Time / Cycle (s) = " << eInterp/param.ncycles  << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << "   CPU Mover Time / Cycle   (s) = " << eMoverCPU/param.ncycles << std::endl;
+    std::cout << "   CPU Interp. Time / Cycle (s) = " << eInterpCPU/param.ncycles  << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << "   GPU Mover Time / Cycle   (s) = " << eMoverGPU/param.ncycles << std::endl;
+    std::cout << "   GPU Interp. Time / Cycle (s) = " << eInterpGPU/param.ncycles  << std::endl;
     std::cout << "**************************************" << std::endl;
     
     // exit
