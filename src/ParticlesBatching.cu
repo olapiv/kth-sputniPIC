@@ -2,6 +2,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+/*
 
 size_t queryFreeMemoryOnGPU(void)
 {   
@@ -17,7 +18,7 @@ size_t queryFreeMemoryOnGPU(void)
     return (double)free_byte; //return amount of free memory on GPU in bytes
 }
 
-/* particle mover for GPU with batching */
+
 int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
 {
     // print species and subcycling
@@ -270,3 +271,5 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaFree(pzz_flat_dev);
 
 }
+
+*/
