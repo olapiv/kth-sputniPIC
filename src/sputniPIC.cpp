@@ -219,13 +219,17 @@ int main(int argc, char **argv){
     grid_deallocate(&grd);
     field_deallocate(&grd,&fieldCPU);
     field_deallocate(&grd,&fieldGPU);
-    // interp
+    
+    interp_dens_net_deallocate(&grd,&idnGPU);
     interp_dens_net_deallocate(&grd,&idnCPU);
     
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
         interp_dens_species_deallocate(&grd,&idsCPU[is]);
         particle_deallocate(&partCPU[is]);
+
+        interp_dens_species_deallocate(&grd,&idsGPU[is]);
+        particle_deallocate(&partGPU[is]);
     }
     
     

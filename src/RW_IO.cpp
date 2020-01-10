@@ -7,6 +7,7 @@
 #include "input_array.h"
 #include "InterpDensNet.h"
 #include "EMfield.h"
+#include "Alloc.h"
 
 /** read the inputfile given via the command line */
 void readInputFile(struct parameters* param, int argc, char **argv)
@@ -360,6 +361,7 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field, strin
     } else {
         filename = "E_gpu";
     }
+    int flat_idx = 0;
     string temp;
     std::stringstream cc;
     cc << cycle;
@@ -396,21 +398,11 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field, strin
                     Ey = field->Ey[i][j][k];
                     Ez = field->Ez[i][j][k];
                 } else {
-                    Ex = field->Ex_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ];
-                    Ey = field->Ey_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ];
-                    Ez = field->Ez_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ];
+                    // Ex = get_idx(ix - ii, iy - jj, iz - kk, nyn, nzn); // How it is used in Particles.cu..
+                    flat_idx = get_idx(k, j, i, nyn, nxn);  // nyn will be used twice
+                    Ex = field->Ex_flat[flat_idx];
+                    Ey = field->Ey_flat[flat_idx];
+                    Ez = field->Ez_flat[flat_idx];
                 }
                 if (fabs(Ex) < 1E-8)
                     Ex = 0.0;
@@ -455,21 +447,10 @@ void VTK_Write_Vectors(int cycle, struct grid *grd, struct EMfield* field, strin
                     By = field->Byn[i][j][k];
                     Bz = field->Bzn[i][j][k];
                 } else {
-                    Bx = field->Bxn_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ];
-                    Bx = field->Byn_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ];
-                    Bx = field->Bzn_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ];
+                    flat_idx = get_idx(k, j, i, nyn, nxn);  // nyn will be used twice
+                    Bx = field->Bxn_flat[flat_idx];
+                    By = field->Byn_flat[flat_idx];
+                    Bz = field->Bzn_flat[flat_idx];
                 }
                 if (fabs(Bx) < 1E-8)
                     Bx = 0.0;
@@ -494,6 +475,7 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
     } else {
         filename = "rhoe_gpu";
     }
+    int flat_idx = 0;
     string temp;
     std::stringstream cc;
     cc << cycle;
@@ -529,11 +511,8 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
                 if (cpuORgpu == "cpu") {
                     my_file << ids[0].rhon[i][j][k] << std::endl;
                 } else {
-                    my_file << ids[0].rhon_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ] << std::endl;
+                    flat_idx = get_idx(k, j, i, nyn, nxn);  // nyn will be used twice
+                    my_file << ids[0].rhon_flat[flat_idx] << std::endl;
                 }
             }
         }
@@ -567,11 +546,8 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
                 if (cpuORgpu == "cpu") {
                     my_file2 << ids[1].rhon[i][j][k] << std::endl;
                 } else {
-                    my_file2 << ids[1].rhon_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ] << std::endl;
+                    flat_idx = get_idx(k, j, i, nyn, nxn);  // nyn will be used twice
+                    my_file2 << ids[1].rhon_flat[flat_idx] << std::endl;
                 }
             }
         }
@@ -606,11 +582,8 @@ void VTK_Write_Scalars(int cycle, struct grid *grd, struct interpDensSpecies* id
                 if (cpuORgpu == "cpu") {
                     my_file1 << idn->rhon[i][j][k]  << std::endl;
                 } else {
-                    my_file1 << idn->rhon_flat[
-                        k * (grd->nxn + grd->nyn) +
-                        j * (grd->nxn) +
-                        i
-                    ] << std::endl;
+                    flat_idx = get_idx(k, j, i, nyn, nxn);  // nyn will be used twice
+                    my_file1 << idn->rhon_flat[flat_idx] << std::endl;
                 }
             }
         }
