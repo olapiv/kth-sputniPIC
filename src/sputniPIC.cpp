@@ -187,7 +187,7 @@ int main(int argc, char **argv){
     
     }  // end of one PIC cycle
 
-    compareValues(grd, idsGPU, idsCPU);
+    compareValues(param, grd, idsGPU, idsCPU, idnGPU, idnCPU);
     
     /// Release the resources
     // deallocate field

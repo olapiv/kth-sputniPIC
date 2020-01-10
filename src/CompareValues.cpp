@@ -1,6 +1,6 @@
 #include "CompareValues.h"
 
-void compareValues(grid grd, interpDensSpecies* idsGPU, interpDensSpecies* idsCPU)
+void compareValues(parameters param, grid grd, interpDensSpecies* idsGPU, interpDensSpecies* idsCPU, interpDensNet idnGPU, interpDensNet idnCPU)
 {
     int flat_idx = 0;
     int nxn = grd.nxn;
@@ -39,7 +39,7 @@ void compareValues(grid grd, interpDensSpecies* idsGPU, interpDensSpecies* idsCP
         for (register int j=0; j < nyn; j++){
             for (register int k=0; k < nzn; k++){
                 flat_idx = get_idx(i, j, k, nyn, nzn);
-                valueFlat = idnCPU.rhon_flat[flat_idx];
+                valueFlat = idnGPU.rhon_flat[flat_idx];
 
                 sumIdnRhon =+ idnCPU.rhon[i][j][k];
                 sumIdnRhonFlat =+ valueFlat;
