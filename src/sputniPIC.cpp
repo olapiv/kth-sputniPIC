@@ -152,12 +152,15 @@ int main(int argc, char **argv){
 
     // ------COMPARING RESULTS, OWN CODE--------
     int flat_idx = 0;
+    int nxn = grd.nxn;
+    int nyn = grd.nyn;
+    int nzn = grd.nzn;
 
     float maxErrorIdsRhon = 0.0f;
     for (int is=0; is < param.ns; is++) {
-        for (register int i=0; i < grd.nxn; i++) {
-            for (register int j=0; j < grd.nyn; j++) {
-                for (register int k=0; k < grd.nzn; k++){        
+        for (register int i=0; i < nxn; i++) {
+            for (register int j=0; j < nyn; j++) {
+                for (register int k=0; k < nzn; k++){        
                     flat_idx = get_idx(i, j, k, nyn, nzn);
                     maxErrorIdsRhon = fmax(maxErrorIdsRhon, fabs(
                         idsCPU[is].rhon[i][j][k] - 
@@ -170,6 +173,7 @@ int main(int argc, char **argv){
         }
     }
     std::cout << "Max error idsrhon: " << maxErrorIdsRhon << std::endl;
+    std::cout << "------------" << std::endl;
 
     float valueFlat;
     float sumIdnRhon = 0.0f;
@@ -180,9 +184,9 @@ int main(int argc, char **argv){
     float errorIdnRhon = 0.0f;
     float maxErrorIdnRhon = 0.0f;
     float sumErrorIdnRhon = 0.0f;
-    for (register int i=0; i < grd.nxn; i++){
-        for (register int j=0; j < grd.nyn; j++){
-            for (register int k=0; k < grd.nzn; k++){
+    for (register int i=0; i < nxn; i++){
+        for (register int j=0; j < nyn; j++){
+            for (register int k=0; k < nzn; k++){
                 flat_idx = get_idx(i, j, k, nyn, nzn);
                 valueFlat = idnCPU.rhon_flat[flat_idx];
 
@@ -197,13 +201,13 @@ int main(int argc, char **argv){
             }
         }
     }
-    avgIdnRhon = sumIdnRhon / (grd.nxn * grd.nyn * grd.nzn);
-    avgIdnRhonFlat = sumIdnRhonFlat / (grd.nxn * grd.nyn * grd.nzn);
+    avgIdnRhon = sumIdnRhon / (nxn * nyn * nzn);
+    avgIdnRhonFlat = sumIdnRhonFlat / (nxn * nyn * nzn);
     std::cout << "Avg idnrhon: " << avgIdnRhon << std::endl;
     std::cout << "Avg idnrhonFlat: " << avgIdnRhonFlat << std::endl;
 
     std::cout << "Max error idnrhon: " << maxErrorIdnRhon << std::endl;
-    std::cout << "Avg error idnrhon: " << sumErrorIdnRhon / (grd.nxn * grd.nyn * grd.nzn) << std::endl;
+    std::cout << "Avg error idnrhon: " << sumErrorIdnRhon / (nxn * nyn * nzn) << std::endl;
 
     // ---------------- 
 
