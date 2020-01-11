@@ -158,7 +158,8 @@ int main(int argc, char **argv){
         // implicit mover
         iMoverGPU = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++) {
-            mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
+            // mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
+            mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
         }
         eMoverGPU += (cpuSecond() - iMoverGPU); // stop timer for mover
         
@@ -166,7 +167,8 @@ int main(int argc, char **argv){
         iInterpGPU = cpuSecond(); // start timer for the interpolation step
         // interpolate species
         for (int is=0; is < param.ns; is++) {
-            interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
+            // interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
+            interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
         }
         // apply BC to interpolated densities
         for (int is=0; is < param.ns; is++) {
