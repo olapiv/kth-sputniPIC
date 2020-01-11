@@ -70,7 +70,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
     size_t free_bytes = queryFreeMemoryOnGPU();
     size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
-    int number_of_batches = static_cast<int>(ceil(total_necessary_bytes / free_bytes));
+    int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
     size_t size_per_attribute_per_batch = free_bytes / 6;
     int max_num_particles_gpu = static_cast<int>(floor((size_per_attribute_per_batch / sizeof(FPpart))));
 
@@ -212,7 +212,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
     size_t free_bytes = queryFreeMemoryOnGPU();
     size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
-    int number_of_batches = static_cast<int>(ceil(total_necessary_bytes / free_bytes));
+    int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
     size_t size_per_attribute_per_batch = free_bytes / 6;
     int max_num_particles_gpu = static_cast<int>(floor((size_per_attribute_per_batch / sizeof(FPpart))));
 
