@@ -96,6 +96,12 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
+
+        if (n_batch == number_of_batches - 1) {
+            size_per_attribute_per_batch = (total_necessary_bytes - ((number_of_batches -1) * free_bytes) / 6)
+            max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+        }
+        
         std::cout << "  n_batch  = " << n_batch << std::endl;
         std::cout << "  split_index  = " << split_index << std::endl;
 
@@ -246,6 +252,11 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         split_index = n_batch * max_num_particles_gpu;
         std::cout << "  n_batch  = " << n_batch << std::endl;
         std::cout << "  split_index  = " << split_index << std::endl;
+
+        if (n_batch == number_of_batches - 1) {
+            size_per_attribute_per_batch = (total_necessary_bytes - ((number_of_batches -1) * free_bytes) / 6)
+            max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+        }
 
         cudaMalloc(&x_dev, size_per_attribute_per_batch);
         cudaMalloc(&y_dev, size_per_attribute_per_batch);
