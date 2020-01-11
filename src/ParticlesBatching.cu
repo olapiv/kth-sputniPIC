@@ -250,6 +250,8 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
+        std::cout << "  n_batch  = " << n_batch << std::endl;
+        std::cout << "  split_index  = " << split_index << std::endl;
 
         cudaMemcpy(x_dev, part->x+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
         cudaMemcpy(y_dev, part->y+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
@@ -278,6 +280,8 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
     }
 
+    std::cout << "  Finished iterating over number_of_batches " << std::endl;
+
     // copy memory back to CPU (only the parts that have been modified inside the kernel)
 
     cudaMemcpy(ids->Jx_flat, Jx_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
@@ -290,6 +294,8 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaMemcpy(ids->pyy_flat, pyy_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     cudaMemcpy(ids->pyz_flat, pyz_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     cudaMemcpy(ids->pzz_flat, pzz_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
+    
+    std::cout << "  Finished cudaMemcpying back " << std::endl;
     
     // clean up
 
