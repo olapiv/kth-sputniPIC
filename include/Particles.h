@@ -62,6 +62,8 @@ void particle_deallocate(struct particles*);
 /** particle mover */
 int mover_PC(struct particles*, struct EMfield*, struct grid*, struct parameters*);
 
+void interP2G_kernel( FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat, int nxn, int nyn, int nzn, double xStart, double yStart, double zStart, FPfield invdx, FPfield invdy, FPfield invdz, FPfield invVOL, FPinterp* Jx_flat, FPinterp* Jy_flat, FPinterp *Jz_flat, FPinterp *rhon_flat, FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat, int npmax);
+
 /** Interpolation Particle --> Grid: This is for species */
 void interpP2G(struct particles*, struct interpDensSpecies*, struct grid*);
 

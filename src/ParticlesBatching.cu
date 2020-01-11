@@ -34,8 +34,8 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     // print species and subcycling
     std::cout << "***GPU MOVER with SUBCYCLYING "<< param->n_sub_cycles << " - species " << part->species_ID << " ***" << std::endl;
 
-    int split_index
-    int MAX_GPU_PARTICILES
+    int split_index;
+    int MAX_GPU_PARTICILES;
 
     // auxiliary variables
     FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
@@ -106,12 +106,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
     cudaMalloc(&Bzn_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
-
-
-    const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
-
-    const int n_particles = to - split_index + 1;
-    size_t batch_size = (to - split_index + 1) * sizeof(FPpart);        
+     
 
     FPpart *d_x, *d_y, *d_z, *d_u, *d_v, *d_w;
     cudaMalloc(&d_x, batch_size);
