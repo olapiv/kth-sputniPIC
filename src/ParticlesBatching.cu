@@ -16,8 +16,8 @@
 
 size_t queryFreeMemoryOnGPU(void)
 {   
-        size_t free_byte ;
-        size_t total_byte ;
+        size_t free_byte;
+        size_t total_byte;
 
         cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte );
         if ( cudaSuccess != cuda_status ){
@@ -25,7 +25,7 @@ size_t queryFreeMemoryOnGPU(void)
             exit(1);
         }
 
-    return (double)free_byte; //return amount of free memory on GPU in bytes
+    return free_byte; //return amount of free memory on GPU in bytes
 }
 
 /* particle mover for GPU with batching */

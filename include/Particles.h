@@ -80,7 +80,7 @@ __global__ void single_particle_kernel(
     bool PERIODICX, bool PERIODICY, bool PERIODICZ, 
     FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2, 
     int NiterMover, int npmax
-)
+);
 
 /** Interpolation Particle --> Grid: This is for species */
 void interpP2G(struct particles*, struct interpDensSpecies*, struct grid*);
