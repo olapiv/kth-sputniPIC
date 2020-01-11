@@ -25,7 +25,7 @@ size_t queryFreeMemoryOnGPU(void)
             exit(1);
         }
 
-    return free_byte * 0.5; // Assume 20% for safety
+    return free_byte * 0.8; // Assume 20% for safety
 }
 
 /* particle mover for GPU with batching */
@@ -84,12 +84,6 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
     std::cout << "**************************************" << std::endl;
-
-    /* 
-    const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
-    const int n_particles = to - split_index + 1;
-    size_t batch_size = (to - split_index + 1) * sizeof(FPpart);
-    */
 
     int split_index;
 
@@ -239,12 +233,6 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
     std::cout << "**************************************" << std::endl;
-
-    /* 
-    const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
-    const int n_particles = to - split_index + 1;
-    size_t batch_size = (to - split_index + 1) * sizeof(FPpart);
-    */
 
     int split_index;
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {

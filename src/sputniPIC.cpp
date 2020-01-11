@@ -167,8 +167,6 @@ int main(int argc, char **argv){
         iInterpGPU = cpuSecond(); // start timer for the interpolation step
         // interpolate species
         for (int is=0; is < param.ns; is++) {
-            std::cout <<< "*** STARTING interpP2G_GPU_batch *** Species: " <<< is <<< std::endl;
-
             // interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
             interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
         }
