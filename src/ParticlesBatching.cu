@@ -85,7 +85,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     std::cout << "**************************************" << std::endl;
     std::cout << "   In mover_GPU_batch " << std::endl;
     std::cout << "   free_bytes = " << free_bytes << std::endl;
-    std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
+    // std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
     std::cout << "   number_of_batches = " << number_of_batches << std::endl;
     std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
@@ -245,7 +245,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     std::cout << "**************************************" << std::endl;
     std::cout << "   In interpP2G_GPU_batch " << std::endl;
     std::cout << "   free_bytes = " << free_bytes << std::endl;
-    std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
+    // std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
     std::cout << "   number_of_batches = " << number_of_batches << std::endl;
     std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
