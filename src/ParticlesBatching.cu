@@ -74,6 +74,14 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     size_t size_per_attribute_per_batch = free_bytes / 6;
     int max_num_particles_gpu = static_cast<int>(floor((size_per_attribute_per_batch / sizeof(FPpart))));
 
+    std::cout << "   In mover_GPU_batch = " << std::endl;
+    std::cout << "   free_bytes = " << free_bytes << std::endl;
+    std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
+    std::cout << "   number_of_batches = " << number_of_batches << std::endl;
+    std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
+    std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
+    
+
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
     const int n_particles = to - split_index + 1;
@@ -125,6 +133,9 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         cudaMemcpy(part->v+split_index, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
         cudaMemcpy(part->w+split_index, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
 
+        free_bytes = queryFreeMemoryOnGPU();
+        std::cout << "   Inside loop of mover_GPU_batch = " << std::endl;
+        std::cout << "   free_bytes = " << free_bytes << std::endl;
     }
 
     cudaFree(x_dev);
@@ -205,6 +216,13 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     size_t size_per_attribute_per_batch = free_bytes / 6;
     int max_num_particles_gpu = static_cast<int>(floor((size_per_attribute_per_batch / sizeof(FPpart))));
 
+    std::cout << "   In interpP2G_GPU_batch = " << std::endl;
+    std::cout << "   free_bytes = " << free_bytes << std::endl;
+    std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
+    std::cout << "   number_of_batches = " << number_of_batches << std::endl;
+    std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
+    std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
+
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
     const int n_particles = to - split_index + 1;
@@ -247,6 +265,10 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         cudaMemcpy(part->u+split_index, u_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
         cudaMemcpy(part->v+split_index, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
         cudaMemcpy(part->w+split_index, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+
+        free_bytes = queryFreeMemoryOnGPU();
+        std::cout << "   Inside loop of interpP2G_GPU_batch = " << std::endl;
+        std::cout << "   free_bytes = " << free_bytes << std::endl;
 
     }
 
