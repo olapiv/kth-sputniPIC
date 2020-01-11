@@ -1054,13 +1054,13 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax;
+    total_size_particles = sizeof(FPpart) * part->npmax * 6; // for x,y,z,u,v,w
     
     start_index_batch = 0, end_index_batch = 0;
 
     // implement mini-batching only in the case where the free space on the GPU isn't enough
 
-    if(free_bytes < total_size_particles)
+    if(free_bytes > total_size_particles)
     {
         start_index_batch = 0;
         end_index_batch = part->npmax - 1; // set end_index to the last particle as we are processing in in one batch
@@ -1076,6 +1076,8 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
     for(i = 0; i < number_of_batches; i++)
     {
+
+            std::cout << "BATCH!" << std::endl;
 
             int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
             
@@ -1226,13 +1228,13 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax;
+    total_size_particles = sizeof(FPpart) * part->npmax * 6;
     
     start_index_batch = 0, end_index_batch = 0;
 
     // implement mini-batching only in the case where the free space on the GPU isn't enough
 
-    if(free_bytes < total_size_particles)
+    if(free_bytes > total_size_particles)
     {
         start_index_batch = 0;
         end_index_batch = part->npmax - 1; // set end_index to the last particle as we are processing in in one batch
@@ -1248,6 +1250,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
     for(i = 0; i < number_of_batches; i++)
     {
+
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
             
