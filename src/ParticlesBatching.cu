@@ -64,7 +64,9 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     cudaMemcpy(Bxn_flat_dev, field->Bxn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(Byn_flat_dev, field->Byn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
-     
+    
+    std::cout << "   Allocated and cudaMemcpyied necessary data = " << std::endl;
+
     // Particles to split up
     FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
 
@@ -74,13 +76,14 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
     int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
 
-    std::cout << "   In mover_GPU_batch = " << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << "   In mover_GPU_batch " << std::endl;
     std::cout << "   free_bytes = " << free_bytes << std::endl;
     std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
     std::cout << "   number_of_batches = " << number_of_batches << std::endl;
     std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
-    
+    std::cout << "**************************************" << std::endl;
 
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
@@ -100,6 +103,8 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
+        std::cout << "  n_batch  = " << n_batch << std::endl;
+        std::cout << "  split_index  = " << split_index << std::endl;
 
         cudaMemcpy(x_dev, part->x+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
         cudaMemcpy(y_dev, part->y+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
@@ -135,12 +140,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
     }
 
-    cudaFree(x_dev);
-    cudaFree(y_dev);
-    cudaFree(z_dev);
-    cudaFree(u_dev);
-    cudaFree(v_dev);
-    cudaFree(w_dev);
+    std::cout << "  Finished iterating over number_of_batches " << std::endl;
 
     // Copy memory back to CPU (only the parts that have been modified inside the kernel)
         
@@ -151,17 +151,28 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     cudaMemcpy(field->Byn_flat, Byn_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyDeviceToHost);
     cudaMemcpy(field->Bzn_flat, Bzn_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyDeviceToHost);
     
+    std::cout << "  Finished cudaMemcpying back " << std::endl;
+
     // Clean up
+
+    cudaFree(x_dev);
+    cudaFree(y_dev);
+    cudaFree(z_dev);
+    cudaFree(u_dev);
+    cudaFree(v_dev);
+    cudaFree(w_dev);
+    cudaFree(q_dev);
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
-
     cudaFree(Ex_flat_dev);
     cudaFree(Ey_flat_dev);
     cudaFree(Ez_flat_dev);
     cudaFree(Bxn_flat_dev);
     cudaFree(Byn_flat_dev);
     cudaFree(Bzn_flat_dev);
+
+    std::cout << "  Finished cudaFree back " << std::endl;
 
     return(0);
 }
@@ -213,12 +224,14 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
     int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
 
-    std::cout << "   In interpP2G_GPU_batch = " << std::endl;
+    std::cout << "**************************************" << std::endl;
+    std::cout << "   In interpP2G_GPU_batch " << std::endl;
     std::cout << "   free_bytes = " << free_bytes << std::endl;
     std::cout << "   total_necessary_bytes = " << total_necessary_bytes << std::endl;
     std::cout << "   number_of_batches = " << number_of_batches << std::endl;
     std::cout << "   size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
+    std::cout << "**************************************" << std::endl;
 
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
