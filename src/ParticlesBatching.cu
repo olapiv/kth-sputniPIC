@@ -91,13 +91,6 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     size_t batch_size = (to - split_index + 1) * sizeof(FPpart);
     */
 
-    cudaMalloc(&x_dev, size_per_attribute_per_batch);
-    cudaMalloc(&y_dev, size_per_attribute_per_batch);
-    cudaMalloc(&z_dev, size_per_attribute_per_batch);
-    cudaMalloc(&u_dev, size_per_attribute_per_batch);
-    cudaMalloc(&v_dev, size_per_attribute_per_batch);
-    cudaMalloc(&w_dev, size_per_attribute_per_batch);
-
     int split_index;
 
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
@@ -105,6 +98,13 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         split_index = n_batch * max_num_particles_gpu;
         std::cout << "  n_batch  = " << n_batch << std::endl;
         std::cout << "  split_index  = " << split_index << std::endl;
+
+        cudaMalloc(&x_dev, size_per_attribute_per_batch);
+        cudaMalloc(&y_dev, size_per_attribute_per_batch);
+        cudaMalloc(&z_dev, size_per_attribute_per_batch);
+        cudaMalloc(&u_dev, size_per_attribute_per_batch);
+        cudaMalloc(&v_dev, size_per_attribute_per_batch);
+        cudaMalloc(&w_dev, size_per_attribute_per_batch);
 
         cudaMemcpy(x_dev, part->x+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
         cudaMemcpy(y_dev, part->y+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
@@ -138,6 +138,13 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         cudaMemcpy(part->v+split_index, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
         cudaMemcpy(part->w+split_index, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
 
+        cudaFree(x_dev);
+        cudaFree(y_dev);
+        cudaFree(z_dev);
+        cudaFree(u_dev);
+        cudaFree(v_dev);
+        cudaFree(w_dev);
+        cudaFree(q_dev);
     }
 
     std::cout << "  Finished iterating over number_of_batches " << std::endl;
@@ -154,14 +161,6 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     std::cout << "  Finished cudaMemcpying back " << std::endl;
 
     // Clean up
-
-    cudaFree(x_dev);
-    cudaFree(y_dev);
-    cudaFree(z_dev);
-    cudaFree(u_dev);
-    cudaFree(v_dev);
-    cudaFree(w_dev);
-    cudaFree(q_dev);
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
@@ -241,19 +240,19 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     size_t batch_size = (to - split_index + 1) * sizeof(FPpart);
     */
 
-    cudaMalloc(&x_dev, size_per_attribute_per_batch);
-    cudaMalloc(&y_dev, size_per_attribute_per_batch);
-    cudaMalloc(&z_dev, size_per_attribute_per_batch);
-    cudaMalloc(&u_dev, size_per_attribute_per_batch);
-    cudaMalloc(&v_dev, size_per_attribute_per_batch);
-    cudaMalloc(&w_dev, size_per_attribute_per_batch);
-
     int split_index;
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
         std::cout << "  n_batch  = " << n_batch << std::endl;
         std::cout << "  split_index  = " << split_index << std::endl;
+
+        cudaMalloc(&x_dev, size_per_attribute_per_batch);
+        cudaMalloc(&y_dev, size_per_attribute_per_batch);
+        cudaMalloc(&z_dev, size_per_attribute_per_batch);
+        cudaMalloc(&u_dev, size_per_attribute_per_batch);
+        cudaMalloc(&v_dev, size_per_attribute_per_batch);
+        cudaMalloc(&w_dev, size_per_attribute_per_batch);
 
         cudaMemcpy(x_dev, part->x+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
         cudaMemcpy(y_dev, part->y+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
@@ -280,6 +279,14 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         cudaMemcpy(part->v+split_index, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
         cudaMemcpy(part->w+split_index, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
 
+        cudaFree(x_dev);
+        cudaFree(y_dev);
+        cudaFree(z_dev);
+        cudaFree(u_dev);
+        cudaFree(v_dev);
+        cudaFree(w_dev);
+        cudaFree(q_dev);
+
     }
 
     std::cout << "  Finished iterating over number_of_batches " << std::endl;
@@ -300,14 +307,6 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     std::cout << "  Finished cudaMemcpying back " << std::endl;
 
     // clean up
-
-    cudaFree(x_dev);
-    cudaFree(y_dev);
-    cudaFree(z_dev);
-    cudaFree(u_dev);
-    cudaFree(v_dev);
-    cudaFree(w_dev);
-    cudaFree(q_dev);
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
