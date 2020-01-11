@@ -5,6 +5,7 @@
 #include <math.h>
 #include "Alloc.h"
 #include "Parameters.h"
+#include "Particles.h"
 #include "PrecisionTypes.h"
 #include "Grid.h"
 #include "EMfield.h"
@@ -28,11 +29,13 @@ size_t queryFreeMemoryOnGPU(void)
 }
 
 /* particle mover for GPU with batching */
-/*
 int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
 {
     // print species and subcycling
     std::cout << "***GPU MOVER with SUBCYCLYING "<< param->n_sub_cycles << " - species " << part->species_ID << " ***" << std::endl;
+
+    int split_index
+    int MAX_GPU_PARTICILES
 
     // auxiliary variables
     FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
@@ -281,4 +284,3 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaFree(pzz_flat_dev);
 
 }
-+/
