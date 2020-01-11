@@ -71,10 +71,16 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
 
     size_t free_bytes = queryFreeMemoryOnGPU();
-    size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
-    int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
-    size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
-    int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+    int max_FBs_agg = free_bytes / sizeof(FPpart);
+    int max_num_particles_gpu = max_FBs_agg / 6;
+    int number_of_batches = (int)ceil((float)part->npmax / (float)max_num_particles_gpu);
+    size_t size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
+
+    // size_t free_bytes = queryFreeMemoryOnGPU();
+    // size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
+    // int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
+    // size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
+    // int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
 
     std::cout << "**************************************" << std::endl;
     std::cout << "   In mover_GPU_batch " << std::endl;
@@ -91,9 +97,14 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
         split_index = n_batch * max_num_particles_gpu;
 
+        // if (n_batch == number_of_batches - 1) {
+        //     size_per_attribute_per_batch = (total_necessary_bytes - ((number_of_batches -1) * free_bytes)) / 6;
+        //     max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+        // }
+
         if (n_batch == number_of_batches - 1) {
-            size_per_attribute_per_batch = (total_necessary_bytes - ((number_of_batches -1) * free_bytes)) / 6;
-            max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+            max_num_particles_gpu = part->npmax - ((number_of_batches - 1) * max_num_particles_gpu);
+            size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
         }
         
         std::cout << "  n_batch  = " << n_batch << std::endl;
@@ -220,10 +231,16 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
 
     size_t free_bytes = queryFreeMemoryOnGPU();
-    size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
-    int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
-    size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
-    int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+    int max_FBs_agg = free_bytes / sizeof(FPpart);
+    int max_num_particles_gpu = max_FBs_agg / 6;
+    int number_of_batches = (int)ceil((float)part->npmax / (float)max_num_particles_gpu);
+    size_t size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
+
+    // size_t free_bytes = queryFreeMemoryOnGPU();
+    // size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
+    // int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
+    // size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
+    // int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
 
     std::cout << "**************************************" << std::endl;
     std::cout << "   In interpP2G_GPU_batch " << std::endl;
@@ -241,9 +258,14 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         std::cout << "  n_batch  = " << n_batch << std::endl;
         std::cout << "  split_index  = " << split_index << std::endl;
 
+        // if (n_batch == number_of_batches - 1) {
+        //     size_per_attribute_per_batch = (total_necessary_bytes - ((number_of_batches -1) * free_bytes)) / 6;
+        //     max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+        // }
+
         if (n_batch == number_of_batches - 1) {
-            size_per_attribute_per_batch = (total_necessary_bytes - ((number_of_batches -1) * free_bytes)) / 6;
-            max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
+            max_num_particles_gpu = part->npmax - ((number_of_batches - 1) * max_num_particles_gpu);
+            size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
         }
 
         cudaMalloc(&x_dev, size_per_attribute_per_batch);
