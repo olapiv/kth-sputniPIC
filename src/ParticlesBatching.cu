@@ -72,7 +72,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
     int number_of_batches = static_cast<int>(ceil(total_necessary_bytes / free_bytes));
     size_t size_per_attribute_per_batch = free_bytes / 6;
-    int max_num_particles_gpu = static_cast<int>(floor(((size_per_attribute_per_batch / 6) / sizeof(FPpart))));
+    int max_num_particles_gpu = static_cast<int>(floor((size_per_attribute_per_batch / sizeof(FPpart))));
 
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
@@ -93,12 +93,12 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
         split_index = n_batch * max_num_particles_gpu;
 
-        cudaMemcpy(x_dev, &(part->x[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(y_dev, &(part->y[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(z_dev, &(part->z[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice);
-        cudaMemcpy(u_dev, &(part->u[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(v_dev, &(part->v[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(w_dev, &(part->w[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(x_dev, part->x+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(y_dev, part->y+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(z_dev, part->z+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice);
+        cudaMemcpy(u_dev, part->u+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(v_dev, part->v+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(w_dev, part->w+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
 
         // start subcycling
         for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
@@ -117,12 +117,12 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
         } // end of one particle
 
-        cudaMemcpy(part->x, x_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->y, y_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->z, z_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->u, u_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->v, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->w, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->x+split_index, x_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->y+split_index, y_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->z+split_index, z_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->u+split_index, u_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->v+split_index, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->w+split_index, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
 
     }
 
@@ -222,12 +222,12 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
         split_index = n_batch * max_num_particles_gpu;
 
-        cudaMemcpy(x_dev, &(part->x[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(y_dev, &(part->y[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(z_dev, &(part->z[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice);
-        cudaMemcpy(u_dev, &(part->u[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(v_dev, &(part->v[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
-        cudaMemcpy(w_dev, &(part->w[split_index]), size_per_attribute_per_batch, cudaMemcpyHostToDevice);
+        cudaMemcpy(x_dev, part->x+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(y_dev, part->y+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(z_dev, part->z+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice);
+        cudaMemcpy(u_dev, part->u+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(v_dev, part->v+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
+        cudaMemcpy(w_dev, part->w+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
 
         interP2G_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>(
             x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
@@ -240,12 +240,12 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         );
         cudaDeviceSynchronize();
 
-        cudaMemcpy(part->x, x_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->y, y_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->z, z_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->u, u_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->v, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
-        cudaMemcpy(part->w, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->x+split_index, x_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->y+split_index, y_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->z+split_index, z_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->u+split_index, u_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->v+split_index, v_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
+        cudaMemcpy(part->w+split_index, w_dev, size_per_attribute_per_batch, cudaMemcpyDeviceToHost);
 
     }
 
