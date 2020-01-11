@@ -2,6 +2,16 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include <math.h>
+#include "Alloc.h"
+#include "Parameters.h"
+#include "PrecisionTypes.h"
+#include "Grid.h"
+#include "EMfield.h"
+#include "InterpDensSpecies.h"
+
+#define TPB 64
+
 
 size_t queryFreeMemoryOnGPU(void)
 {   
@@ -18,6 +28,7 @@ size_t queryFreeMemoryOnGPU(void)
 }
 
 /* particle mover for GPU with batching */
+/*
 int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
 {
     // print species and subcycling
@@ -270,3 +281,4 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaFree(pzz_flat_dev);
 
 }
++/

@@ -1,14 +1,6 @@
 #ifndef PARTICLES_BATCHING_H
 #define PARTICLES_BATCHING_H
-#define TPB 64
 
-#include <math.h>
-#include "Alloc.h"
-#include "Parameters.h"
-#include "PrecisionTypes.h"
-#include "Grid.h"
-#include "EMfield.h"
-#include "InterpDensSpecies.h"
 
 /** interpP2G for GPU*/
 void interpP2G_GPU_basic(struct particles*, struct interpDensSpecies*, struct grid*);
