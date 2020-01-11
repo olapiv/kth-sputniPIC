@@ -72,7 +72,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
     int number_of_batches = static_cast<int>(ceil(total_necessary_bytes / free_bytes));
     size_t size_per_attribute_per_batch = free_bytes / 6;
-    int max_num_particles_gpu = static_cast<int>floor(((size_per_attribute_per_batch / 6) / sizeof(FPpart)));
+    int max_num_particles_gpu = static_cast<int>(floor(((size_per_attribute_per_batch / 6) / sizeof(FPpart))));
 
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
@@ -89,7 +89,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
     int split_index;
 
-    for (int n_batch = 0, n_batch < number_of_batches, n_batch++) {
+    for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
 
@@ -160,7 +160,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
 void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, struct grid* grd)
 {
-    
+
     // Necesssary for all batches:
     FPinterp * q_dev = NULL, *Jx_flat_dev = NULL, *Jy_flat_dev = NULL, *Jz_flat_dev = NULL, *rhon_flat_dev = NULL, *pxx_flat_dev = NULL, *pxy_flat_dev = NULL, *pxz_flat_dev = NULL, *pyy_flat_dev = NULL, *pyz_flat_dev = NULL, *pzz_flat_dev = NULL;
     FPfield *XN_flat_dev = NULL, *YN_flat_dev = NULL, *ZN_flat_dev = NULL;
@@ -202,7 +202,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
     int number_of_batches = static_cast<int>(ceil(total_necessary_bytes / free_bytes));
     size_t size_per_attribute_per_batch = free_bytes / 6;
-    int max_num_particles_gpu = static_cast<int>floor(((size_per_attribute_per_batch / 6) / sizeof(FPpart)));
+    int max_num_particles_gpu = static_cast<int>(floor(((size_per_attribute_per_batch / 6) / sizeof(FPpart))));
 
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
@@ -218,7 +218,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaMalloc(&w_dev, size_per_attribute_per_batch);
 
     int split_index;
-    for (int n_batch = 0, n_batch < number_of_batches, n_batch++) {
+    for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
 
