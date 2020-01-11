@@ -104,14 +104,15 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
 
             // Call GPU kernel
-            single_particle_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>(
+            single_particle_kernel<<<(max_num_particles_gpu + TPB - 1)/TPB, TPB>>>(
                 x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                 grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, 
                 grd->invdx, grd->invdy, grd->invdz, grd->Lx, grd->Ly, grd->Lz, grd->invVOL, 
                 Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, 
                 param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
                 dt_sub_cycling, dto2, qomdt2, 
-                part->NiterMover, part->nop
+                part->NiterMover, 
+                max_num_particles_gpu
             );
             cudaDeviceSynchronize();
 
@@ -202,7 +203,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
     int number_of_batches = static_cast<int>(ceil(total_necessary_bytes / free_bytes));
     size_t size_per_attribute_per_batch = free_bytes / 6;
-    int max_num_particles_gpu = static_cast<int>(floor(((size_per_attribute_per_batch / 6) / sizeof(FPpart))));
+    int max_num_particles_gpu = static_cast<int>(floor((size_per_attribute_per_batch / sizeof(FPpart))));
 
     /* 
     const long int to = split_index + MAX_GPU_PARTICILES - 1 < part->npmax - 1 ? split_index + MAX_GPU_PARTICILES - 1 : part->npmax - 1;
@@ -229,14 +230,14 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         cudaMemcpy(v_dev, part->v+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
         cudaMemcpy(w_dev, part->w+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
 
-        interP2G_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>(
+        interP2G_kernel<<<(max_num_particles_gpu + TPB - 1)/TPB, TPB>>>(
             x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
             XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
             grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, 
             grd->invdx, grd->invdy, grd->invdz, grd->invVOL, 
             Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, 
             rhon_flat_dev, pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
-            part->nop
+            max_num_particles_gpu
         );
         cudaDeviceSynchronize();
 
