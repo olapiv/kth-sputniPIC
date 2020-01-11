@@ -181,6 +181,8 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, struct grid* grd)
 {
 
+    std::cout << "*** STARTING interpP2G_GPU_batch ***" << std::endl;
+
     // Necesssary for all batches:
     FPinterp * q_dev = NULL, *Jx_flat_dev = NULL, *Jy_flat_dev = NULL, *Jz_flat_dev = NULL, *rhon_flat_dev = NULL, *pxx_flat_dev = NULL, *pxy_flat_dev = NULL, *pxz_flat_dev = NULL, *pyy_flat_dev = NULL, *pyz_flat_dev = NULL, *pzz_flat_dev = NULL;
     FPfield *XN_flat_dev = NULL, *YN_flat_dev = NULL, *ZN_flat_dev = NULL;
@@ -296,7 +298,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaMemcpy(ids->pzz_flat, pzz_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     
     std::cout << "  Finished cudaMemcpying back " << std::endl;
-    
+
     // clean up
 
     cudaFree(x_dev);
