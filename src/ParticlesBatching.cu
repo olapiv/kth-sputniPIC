@@ -148,7 +148,6 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         cudaFree(u_dev);
         cudaFree(v_dev);
         cudaFree(w_dev);
-        cudaFree(q_dev);
 
         cudaDeviceSynchronize();
     }
@@ -167,6 +166,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     std::cout << "  Finished cudaMemcpying back " << std::endl;
 
     // Clean up
+    cudaFree(q_dev);
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
