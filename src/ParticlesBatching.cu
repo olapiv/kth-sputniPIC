@@ -25,7 +25,7 @@ size_t queryFreeMemoryOnGPU(void)
             exit(1);
         }
 
-    return free_byte * 0.8; // Assume 20% for safety
+    return free_byte * 0.001; // Assume 20% for safety
 }
 
 /* particle mover for GPU with batching */
@@ -65,7 +65,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     cudaMemcpy(Byn_flat_dev, field->Byn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     
-    std::cout << "   Allocated and cudaMemcpyied necessary data = " << std::endl;
+    std::cout << "   Allocated and cudaMemcpyied necessary data " << std::endl;
 
     // Particles to split up
     FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
@@ -75,12 +75,6 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     int max_num_particles_gpu = max_FBs_agg / 6;
     int number_of_batches = (int)ceil((float)part->npmax / (float)max_num_particles_gpu);
     size_t size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
-
-    // size_t free_bytes = queryFreeMemoryOnGPU();
-    // size_t total_necessary_bytes = 6 * part->npmax * sizeof(FPpart);
-    // int number_of_batches = (total_necessary_bytes / free_bytes) + 1;
-    // size_t size_per_attribute_per_batch = (free_bytes / 6) + 1;
-    // int max_num_particles_gpu = (size_per_attribute_per_batch / sizeof(FPpart)) + 1;
 
     std::cout << "**************************************" << std::endl;
     std::cout << "   In mover_GPU_batch " << std::endl;
@@ -121,13 +115,16 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         cudaMemcpy(w_dev, part->w+split_index, size_per_attribute_per_batch, cudaMemcpyHostToDevice); 
 
         // start subcycling
-        for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
+        for (int i_sub=0; i_sub < part->n_sub_cycles; i_sub++){
 
             // Call GPU kernel
             single_particle_kernel<<<(max_num_particles_gpu + TPB - 1)/TPB, TPB>>>(
-                x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
-                grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, 
-                grd->invdx, grd->invdy, grd->invdz, grd->Lx, grd->Ly, grd->Lz, grd->invVOL, 
+                x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
+                XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
+                grd->nxn, grd->nyn, grd->nzn, 
+                grd->xStart, grd->yStart, grd->zStart, 
+                grd->invdx, grd->invdy, grd->invdz, 
+                grd->Lx, grd->Ly, grd->Lz, grd->invVOL, 
                 Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, 
                 param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
                 dt_sub_cycling, dto2, qomdt2, 

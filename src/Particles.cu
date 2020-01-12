@@ -409,6 +409,8 @@ __global__ void single_particle_kernel(
     
     if(idx > npmax)
     {
+        printf("Early return. Old threadId = %d, npmax = %d\n", 
+            idx, npmax);
         return;
     }
 
@@ -680,6 +682,8 @@ __global__ void interP2G_kernel( FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPp
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
     if(idx >= npmax)
     {
+        printf("Early return. Old threadId = %d, npmax = %d\n", 
+        idx, npmax);
         return;
     }
 
