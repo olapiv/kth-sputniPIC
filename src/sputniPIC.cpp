@@ -21,6 +21,7 @@
 #include "Particles.h"
 #include "Particles_aux.h" // Needed only if dointerpolation on GPU - avoid reduction on GPU
 #include "ParticlesBatching.h"
+#include "ParticlesStreaming.h"
 
 // Initial Condition
 #include "IC.h"
