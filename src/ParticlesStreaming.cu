@@ -91,13 +91,13 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
         if (number_of_batches > 1) {
-            cudaMallocHost(&(part->y[start_index_batch]), batch_size);
-            cudaMallocHost(&(part->x[start_index_batch]), batch_size);
-            cudaMallocHost(&(part->z[start_index_batch]), batch_size);
-            cudaMallocHost(&(part->u[start_index_batch]), batch_size);
-            cudaMallocHost(&(part->v[start_index_batch]), batch_size);
-            cudaMallocHost(&(part->w[start_index_batch]), batch_size);
-            cudaMallocHost(&(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp));
+            cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
+            cudaMallocHost(&&(part->x[start_index_batch]), batch_size);
+            cudaMallocHost(&&(part->z[start_index_batch]), batch_size);
+            cudaMallocHost(&&(part->u[start_index_batch]), batch_size);
+            cudaMallocHost(&&(part->v[start_index_batch]), batch_size);
+            cudaMallocHost(&&(part->w[start_index_batch]), batch_size);
+            cudaMallocHost(&&(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp));
 
             // cudaMallocHost(&(part->y + start_index_batch), batch_size);
             // cudaMallocHost(&(part->x + start_index_batch), batch_size);
@@ -117,21 +117,13 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
         if (number_of_batches > 1) {
-            cudaMemcpyAsync(x_dev, &(part->x[start_index_batch]), batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(y_dev, &(part->y[start_index_batch]), batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(z_dev, &(part->z[start_index_batch]), batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(u_dev, &(part->u[start_index_batch]), batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(v_dev, &(part->v[start_index_batch]), batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(w_dev, &(part->w[start_index_batch]), batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(q_dev, &(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[i]);
-
-            // cudaMemcpyAsync(x_dev, part->x + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            // cudaMemcpyAsync(y_dev, part->y + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            // cudaMemcpyAsync(z_dev, part->z + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            // cudaMemcpyAsync(u_dev, part->u + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            // cudaMemcpyAsync(v_dev, part->v + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            // cudaMemcpyAsync(w_dev, part->w + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            // cudaMemcpyAsync(q_dev, part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(x_dev, part->x + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(y_dev, part->y + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(z_dev, part->z + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(u_dev, part->u + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(v_dev, part->v + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(w_dev, part->w + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(q_dev, part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[i]);
         } else {
             cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
             cudaMemcpy(y_dev, (part->y + start_index_batch), batch_size, cudaMemcpyHostToDevice);
@@ -166,19 +158,12 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
         // Copy memory back to CPU (only the parts that have been modified inside the kernel)
         if (number_of_batches > 1) {
-            cudaMemcpyAsync(&(part->x[start_index_batch]), x_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&(part->y[start_index_batch]), y_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&(part->z[start_index_batch]), z_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&(part->u[start_index_batch]), u_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&(part->v[start_index_batch]), v_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&(part->w[start_index_batch]), w_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-
-            // cudaMemcpyAsync((part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            // cudaMemcpyAsync((part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            // cudaMemcpyAsync((part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            // cudaMemcpyAsync((part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            // cudaMemcpyAsync((part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            // cudaMemcpyAsync((part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
         } else {
             cudaMemcpy( (part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost);
             cudaMemcpy( (part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost);
