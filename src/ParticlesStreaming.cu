@@ -153,7 +153,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         } // end of one particle
 
 
-        // copy memory back to CPU (only the parts that have been modified inside the kernel)
+        // Copy memory back to CPU (only the parts that have been modified inside the kernel)
         if (number_of_batches > 1) {
             cudaMemcpyAsync((part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
             cudaMemcpyAsync((part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
@@ -180,8 +180,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
         cudaStreamDestroy(cudaStreams[i]);
 
-        // update indices for next batch
-
+        // Update indices for next batch
         start_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH;
     
         if( (start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH) > part->npmax)
@@ -202,8 +201,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     cudaMemcpy(field->Byn_flat, Byn_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyDeviceToHost);
     cudaMemcpy(field->Bzn_flat, Bzn_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyDeviceToHost);
     
-    // clean up
-
+    // Clean up
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
@@ -230,10 +228,9 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
 
     int i, total_size_particles, start_index_batch, end_index_batch, number_of_batches;
 
-    // free_bytes = queryFreeMemoryOnGPU();
-
-    // calculation done later to compute free space after allocating space on the GPU for other variables below, the assumption is that these variables fit in the GPU memory and mini batching is implemented only taking into account particles
-
+    // Calculation done later to compute free space after allocating space on the GPU for 
+    // other variables below, the assumption is that these variables fit in the GPU memory 
+    // and mini batching is implemented only taking into account particles
 
     cudaMalloc(&Jx_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp));
     cudaMemcpy(Jx_flat_dev, ids->Jx_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
@@ -302,40 +299,39 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
         std::cout << "BATCH!" << std::endl;
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
-            
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
 
         std::cout << "num_of_particles_batch" << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
-
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
-        cudaMalloc(&x_dev, batch_size);            
-        cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
-
+        cudaMalloc(&x_dev, batch_size);
         cudaMalloc(&y_dev, batch_size);
-        cudaMemcpy(y_dev, (part->y + start_index_batch), batch_size, cudaMemcpyHostToDevice);
-
         cudaMalloc(&z_dev, batch_size);
-        cudaMemcpy(z_dev, (part->z + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
-
         cudaMalloc(&u_dev, batch_size);
-        cudaMemcpy(u_dev, (part->u + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
-            
         cudaMalloc(&v_dev, batch_size);
-        cudaMemcpy(v_dev, (part->v +  start_index_batch), batch_size, cudaMemcpyHostToDevice); 
-
         cudaMalloc(&w_dev, batch_size);
+        cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
+
+        cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
+        cudaMemcpy(y_dev, (part->y + start_index_batch), batch_size, cudaMemcpyHostToDevice);
+        cudaMemcpy(z_dev, (part->z + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
+        cudaMemcpy(u_dev, (part->u + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
+        cudaMemcpy(v_dev, (part->v +  start_index_batch), batch_size, cudaMemcpyHostToDevice); 
         cudaMemcpy(w_dev, (part->w + start_index_batch), batch_size, cudaMemcpyHostToDevice);
-            
-        cudaMalloc(&q_dev, part->npmax * sizeof(FPinterp));
-        cudaMemcpy(q_dev, part->q, part->npmax * sizeof(FPinterp), cudaMemcpyHostToDevice); 
+        cudaMemcpy(q_dev, (part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice);
 
         // Call GPU kernel
-
-        interP2G_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>( x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->invVOL, Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, part->nop);
-
+        interP2G_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>(
+            x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
+            XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
+            grd->nxn, grd->nyn, grd->nzn, 
+            grd->xStart, grd->yStart, grd->zStart, 
+            grd->invdx, grd->invdy, grd->invdz, grd->invVOL, 
+            Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, 
+            pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
+            part->nop
+        );
         cudaDeviceSynchronize();
-
 
         // copy memory back to CPU (only the parts that have been modified inside the kernel)
 
@@ -354,11 +350,8 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
         cudaFree(w_dev);
         cudaFree(q_dev);
 
-        // update indices for next batch
-
-    
+        // Update indices for next batch
         start_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH;
-
         if ((start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH) > part->npmax)
         {
             end_index_batch = part->npmax - 1;
@@ -370,8 +363,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
 
     }
 
-    // copy memory back to CPU (only the parts that have been modified inside the kernel)
-
+    // Copy memory back to CPU (only the parts that have been modified inside the kernel)
     cudaMemcpy(ids->Jx_flat, Jx_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     cudaMemcpy(ids->Jy_flat, Jy_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     cudaMemcpy(ids->Jz_flat, Jz_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
@@ -383,8 +375,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
     cudaMemcpy(ids->pyz_flat, pyz_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     cudaMemcpy(ids->pzz_flat, pzz_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyDeviceToHost);
     
-    // clean up
-
+    // Clean up
     cudaFree(Jx_flat_dev);
     cudaFree(Jy_flat_dev);
     cudaFree(Jz_flat_dev);
