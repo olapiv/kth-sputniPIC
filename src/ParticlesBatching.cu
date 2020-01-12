@@ -92,7 +92,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
             int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
             size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
     
-            std::cout << "num_of_particles_batch" << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
+            std::cout << "num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
             std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
             cudaMalloc(&x_dev, batch_size);
@@ -261,7 +261,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
 
-        std::cout << "num_of_particles_batch" << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
+        std::cout << "num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
         cudaMalloc(&x_dev, batch_size);
@@ -272,7 +272,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         cudaMalloc(&w_dev, batch_size);
         cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
-        cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
+        cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice);
         cudaMemcpy(y_dev, (part->y + start_index_batch), batch_size, cudaMemcpyHostToDevice);
         cudaMemcpy(z_dev, (part->z + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
         cudaMemcpy(u_dev, (part->u + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
