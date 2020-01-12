@@ -234,7 +234,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     size_t size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
 
     std::cout << "**************************************" << std::endl;
-    std::cout << "   In mover_GPU_batch " << std::endl;
+    std::cout << "   In interpP2G_GPU_batch " << std::endl;
     std::cout << "   free_bytes = " << free_bytes << std::endl;
     std::cout << "   max_FBs_agg = " << max_FBs_agg << std::endl;
     std::cout << "   max_num_particles_gpu = " << max_num_particles_gpu << std::endl;

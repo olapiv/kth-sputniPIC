@@ -408,9 +408,10 @@ __global__ void single_particle_kernel(
     
     if(idx >= npmax)
     {
-        printf("Early return. idx = %d, npmax = %d\n", 
-            idx, npmax);
+        printf("Early return. idx = %d, npmax = %d\n", idx, npmax);
         return;
+    } else {
+        printf("Not returning. idx = %d, npmax = %d\n", idx, npmax);
     }
 
     FPpart omdtsq, denom, ut, vt, wt, udotb;
@@ -690,9 +691,10 @@ __global__ void interP2G_kernel(
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
     if(idx >= npmax)
     {
-        printf("Early return. idx = %d, npmax = %d\n", 
-        idx, npmax);
+        printf("Early return. idx = %d, npmax = %d\n", idx, npmax);
         return;
+    } else {
+        printf("Not returning. idx = %d, npmax = %d\n", idx, npmax);
     }
 
     // arrays needed for interpolation
