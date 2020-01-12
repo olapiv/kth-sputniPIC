@@ -10,10 +10,7 @@
 #include "EMfield.h"
 #include "InterpDensSpecies.h"
 
-/** interpP2G for GPU*/
-void interpP2G_GPU_basic(struct particles*, struct interpDensSpecies*, struct grid*);
-
-/** particle mover for GPU with batching*/
+/** particle mover for GPU with batching */
 int mover_GPU_batch(struct particles*, struct EMfield*, struct grid*, struct parameters*);
 
 /** interpP2G for GPU with batching*/
