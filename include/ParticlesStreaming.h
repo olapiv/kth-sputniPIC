@@ -1,5 +1,5 @@
-#ifndef PARTICLES_BATCHING_H
-#define PARTICLES_BATCHING_H
+#ifndef PARTICLES_STREAMING_H
+#define PARTICLES_STREAMING_H
 #define TPB 64
 
 #include <math.h>
