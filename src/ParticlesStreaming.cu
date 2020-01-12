@@ -31,9 +31,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
     // calculation done later to compute free space after allocating space on the GPU for other variables below, the assumption is that these variables fit in the GPU memory and mini batching is implemented only taking into account particles
 
-    cudaMalloc(&q_dev, part->npmax * sizeof(FPinterp));
-    cudaMemcpy(q_dev, part->q, part->npmax * sizeof(FPinterp), cudaMemcpyHostToDevice);  
-
     cudaMalloc(&XN_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
     cudaMemcpy(XN_flat_dev, grd->XN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
@@ -105,6 +102,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             cudaMallocHost(&(part->u + start_index_batch), batch_size);
             cudaMallocHost(&(part->v + start_index_batch), batch_size);
             cudaMallocHost(&(part->w + start_index_batch), batch_size);
+            cudaMallocHost(&(part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp));
         }
         
         cudaMalloc(&x_dev, batch_size);
@@ -113,7 +111,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         cudaMalloc(&u_dev, batch_size);
         cudaMalloc(&v_dev, batch_size);
         cudaMalloc(&w_dev, batch_size);
-        cudaMalloc(&q_dev, part->npmax * sizeof(FPinterp));
+        cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
         if (number_of_batches > 1) {
             cudaMemcpyAsync(x_dev, part->x + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
@@ -122,7 +120,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             cudaMemcpyAsync(u_dev, part->u + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
             cudaMemcpyAsync(v_dev, part->v + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
             cudaMemcpyAsync(w_dev, part->w + start_index_batch, batch_size, cudaMemcpyHostToDevice, cudaStreams[i]);
-            cudaMemcpyAsync(q_dev, part->q + start_index_batch, part->npmax * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[i]);
+            cudaMemcpyAsync(q_dev, part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[i]);
         } else {
             cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
             cudaMemcpy(y_dev, (part->y + start_index_batch), batch_size, cudaMemcpyHostToDevice);
@@ -130,7 +128,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             cudaMemcpy(u_dev, (part->u + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
             cudaMemcpy(v_dev, (part->v +  start_index_batch), batch_size, cudaMemcpyHostToDevice); 
             cudaMemcpy(w_dev, (part->w + start_index_batch), batch_size, cudaMemcpyHostToDevice);
-            cudaMemcpy(q_dev, part->q, part->npmax * sizeof(FPinterp), cudaMemcpyHostToDevice);
+            cudaMemcpy(q_dev, (part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice);
         }
 
         // start subcycling
@@ -156,13 +154,21 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
 
         // copy memory back to CPU (only the parts that have been modified inside the kernel)
-
-        cudaMemcpy( (part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost);
-        cudaMemcpy( (part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost);
-        cudaMemcpy( (part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost);
-        cudaMemcpy( (part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost);
-        cudaMemcpy( (part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost);
-        cudaMemcpy( (part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost);
+        if (number_of_batches > 1) {
+            cudaMemcpyAsync((part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync((part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+        } else {
+            cudaMemcpy( (part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy( (part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy( (part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy( (part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy( (part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy( (part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost);
+        }
 
         cudaFree(x_dev);
         cudaFree(y_dev);
@@ -171,6 +177,8 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         cudaFree(v_dev);
         cudaFree(w_dev);
         cudaFree(q_dev);
+
+        cudaStreamDestroy(cudaStreams[i]);
 
         // update indices for next batch
 
@@ -199,7 +207,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
-
     cudaFree(Ex_flat_dev);
     cudaFree(Ey_flat_dev);
     cudaFree(Ez_flat_dev);
