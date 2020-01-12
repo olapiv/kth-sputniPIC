@@ -3,7 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #define TPB 64
-#define NUMBER_OF_PARTICLES_PER_BATCH 1024
+#define NUMBER_OF_PARTICLES_PER_BATCH 100000
 
 /** allocate particle arrays */
 void particle_allocate(struct parameters* param, struct particles* part, int is)
@@ -405,7 +405,7 @@ __global__ void single_particle_kernel(
 
     int flat_idx = 0;
     
-    if(idx > npmax)
+    if(idx >= npmax)
     {
         return;
     }
@@ -938,7 +938,7 @@ void interpP2G_GPU_basic(struct particles* part, struct interpDensSpecies* ids, 
     cudaMalloc(&ZN_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
     cudaMemcpy(ZN_flat_dev, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
-    interP2G_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>(  x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->invVOL, Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, part->nop);
+    interP2G_kernel<<<(part->npmax + TPB - 1)/TPB, TPB>>>( x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->invVOL, Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, part->nop);
 
     cudaDeviceSynchronize();
 
@@ -1025,6 +1025,8 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
     // calculation done later to compute free space after allocating space on the GPU for other variables below, the assumption is that these variables fit in the GPU memory and mini batching is implemented only taking into account particles
 
+    cudaMalloc(&q_dev, part->npmax * sizeof(FPinterp));
+    cudaMemcpy(q_dev, part->q, part->npmax * sizeof(FPinterp), cudaMemcpyHostToDevice);  
 
     cudaMalloc(&XN_flat_dev, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
     cudaMemcpy(XN_flat_dev, grd->XN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
@@ -1081,7 +1083,12 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
             int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
             
-            size_t batch_size = (number_of_particles_batch) * sizeof(FPpart); // size of the batch in bytes
+            size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
+
+            std::cout << "num_of_particles_batch" << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
+
+            std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
+
 
             cudaMalloc(&x_dev, batch_size);
             cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
@@ -1109,7 +1116,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
                 // Call GPU kernel
 
-                single_particle_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>( x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->Lx, grd->Ly, grd->Lz, grd->invVOL, Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, param->PERIODICX, param->PERIODICY, param->PERIODICZ, dt_sub_cycling, dto2, qomdt2, part->NiterMover, number_of_particles_batch);
+                single_particle_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>( x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->Lx, grd->Ly, grd->Lz, grd->invVOL, Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, param->PERIODICX, param->PERIODICY, param->PERIODICZ, dt_sub_cycling, dto2, qomdt2, part->NiterMover, part->nop);
                 cudaDeviceSynchronize();
 
             } // end of one particle
@@ -1134,8 +1141,9 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
         // update indices for next batch
 
-        start_index_batch += NUMBER_OF_PARTICLES_PER_BATCH;
-        if(start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH > part->npmax)
+        start_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH;
+    
+        if( (start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH) > part->npmax)
         {
             end_index_batch = part->npmax - 1;
         }
@@ -1228,7 +1236,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6;
+    total_size_particles = sizeof(FPpart) * part->npmax * 6; // for x,y,z,u,v,w
     
     start_index_batch = 0, end_index_batch = 0;
 
@@ -1237,7 +1245,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     if(free_bytes > total_size_particles)
     {
         start_index_batch = 0;
-        end_index_batch = part->npmax - 1; // set end_index to the last particle as we are processing in in one batch
+        end_index_batch = part->npmax - 1 ; // set end_index to the last particle as we are processing in in one batch
         number_of_batches = 1;
     }
     else
@@ -1251,10 +1259,15 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     for(i = 0; i < number_of_batches; i++)
     {
 
+        std::cout << "BATCH!" << std::endl;
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
             
-        size_t batch_size = (number_of_particles_batch) * sizeof(FPpart); // size of the batch in bytes
+        size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
+
+        std::cout << "num_of_particles_batch" << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
+
+        std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
         cudaMalloc(&x_dev, batch_size);            
         cudaMemcpy(x_dev, (part->x + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
@@ -1279,7 +1292,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
         // Call GPU kernel
 
-        interP2G_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>( x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->invVOL, Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, number_of_particles_batch);
+        interP2G_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>( x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, XN_flat_dev, YN_flat_dev, ZN_flat_dev, grd->nxn, grd->nyn, grd->nzn, grd->xStart, grd->yStart, grd->zStart, grd->invdx, grd->invdy, grd->invdz, grd->invVOL, Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, part->nop);
 
         cudaDeviceSynchronize();
 
@@ -1303,9 +1316,10 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
         // update indices for next batch
 
-        start_index_batch += NUMBER_OF_PARTICLES_PER_BATCH;
+    
+        start_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH;
 
-        if(start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH > part->npmax)
+        if ((start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH) > part->npmax)
         {
             end_index_batch = part->npmax - 1;
         }
