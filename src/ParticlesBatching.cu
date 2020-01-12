@@ -65,7 +65,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     std::cout << "   Allocated and cudaMemcpyied necessary data " << std::endl;
 
     // Particles to split up
-    FPinterp *q_dev = NULL, FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
+    FPinterp *q_dev = NULL; FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
 
     size_t free_bytes = queryFreeMemoryOnGPU();
     int max_FBs_agg = free_bytes / sizeof(FPpart);
@@ -222,7 +222,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     cudaMemcpy(ZN_flat_dev, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     // Particles to split up
-    FPinterp * q_dev = NULL, FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
+    FPinterp * q_dev = NULL; FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
 
     size_t free_bytes = queryFreeMemoryOnGPU();
     int max_FBs_agg = free_bytes / sizeof(FPpart);
