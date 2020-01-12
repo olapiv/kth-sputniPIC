@@ -294,7 +294,6 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
         cudaFree(u_dev);
         cudaFree(v_dev);
         cudaFree(w_dev);
-        cudaFree(q_dev);
 
         cudaDeviceSynchronize();
 
@@ -318,6 +317,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     std::cout << "  Finished cudaMemcpying back " << std::endl;
 
     // clean up
+    cudaFree(q_dev);
     cudaFree(XN_flat_dev);
     cudaFree(YN_flat_dev);
     cudaFree(ZN_flat_dev);
