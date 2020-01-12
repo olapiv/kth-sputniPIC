@@ -25,7 +25,7 @@ size_t queryFreeMemoryOnGPU(void)
             exit(1);
         }
 
-    return free_byte * 0.001; // Assume 20% for safety
+    return free_byte * 0.001; // Making memory artificially small for mini-batching
 }
 
 /* particle mover for GPU with batching */
@@ -90,14 +90,14 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
-        std::cout << "      n_batch  = " << n_batch << std::endl;
-        std::cout << "      split_index  = " << split_index << std::endl;
+        // std::cout << "      n_batch  = " << n_batch << std::endl;
+        // std::cout << "      split_index  = " << split_index << std::endl;
 
         if (n_batch == number_of_batches - 1) {
             max_num_particles_gpu = part->npmax - ((number_of_batches - 1) * max_num_particles_gpu);
             size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
-            std::cout << "      Adjusted max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
-            std::cout << "      Adjusted size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
+            // std::cout << "      Adjusted max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
+            // std::cout << "      Adjusted size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
         }
 
         cudaMalloc(&x_dev, size_per_attribute_per_batch);
@@ -246,14 +246,14 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
     for (int n_batch = 0; n_batch < number_of_batches; n_batch++) {
 
         split_index = n_batch * max_num_particles_gpu;
-        std::cout << "  n_batch  = " << n_batch << std::endl;
-        std::cout << "  split_index  = " << split_index << std::endl;
+        // std::cout << "  n_batch  = " << n_batch << std::endl;
+        // std::cout << "  split_index  = " << split_index << std::endl;
 
         if (n_batch == number_of_batches - 1) {
             max_num_particles_gpu = part->npmax - ((number_of_batches - 1) * max_num_particles_gpu);
             size_per_attribute_per_batch = max_num_particles_gpu * sizeof(FPpart);
-            std::cout << "      Adjusted max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
-            std::cout << "      Adjusted size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
+            // std::cout << "      Adjusted max_num_particles_gpu = " << max_num_particles_gpu << std::endl;
+            // std::cout << "      Adjusted size_per_attribute_per_batch = " << size_per_attribute_per_batch << std::endl;
         }
 
         cudaMalloc(&x_dev, size_per_attribute_per_batch);
