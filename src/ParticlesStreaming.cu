@@ -99,12 +99,12 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
         if (number_of_batches > 1) {
-            cudaMallocHost(part->x + start_index_batc, batch_size);
-            cudaMallocHost(part->y + start_index_batc, batch_size);
-            cudaMallocHost(part->z + start_index_batc, batch_size);
-            cudaMallocHost(part->u + start_index_batc, batch_size);
-            cudaMallocHost(part->v + start_index_batc, batch_size);
-            cudaMallocHost(part->w + start_index_batc, batch_size);
+            cudaMallocHost(part->x + start_index_batch, batch_size);
+            cudaMallocHost(part->y + start_index_batch, batch_size);
+            cudaMallocHost(part->z + start_index_batch, batch_size);
+            cudaMallocHost(part->u + start_index_batch, batch_size);
+            cudaMallocHost(part->v + start_index_batch, batch_size);
+            cudaMallocHost(part->w + start_index_batch, batch_size);
         }
         
         cudaMalloc(&x_dev, batch_size);
