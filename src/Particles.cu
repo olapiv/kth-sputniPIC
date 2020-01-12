@@ -404,12 +404,11 @@ __global__ void single_particle_kernel(
 ){
     
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
-
     int flat_idx = 0;
     
-    if(idx > npmax)
+    if(idx >= npmax)
     {
-        printf("Early return. Old threadId = %d, npmax = %d\n", 
+        printf("Early return. idx = %d, npmax = %d\n", 
             idx, npmax);
         return;
     }
@@ -676,13 +675,22 @@ int mover_PC_GPU_basic(struct particles* part, struct EMfield* field, struct gri
     return(0);
 }
 
-__global__ void interP2G_kernel( FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat, int nxn, int nyn, int nzn, double xStart, double yStart, double zStart, FPfield invdx, FPfield invdy, FPfield invdz, FPfield invVOL, FPinterp* Jx_flat, FPinterp* Jy_flat, FPinterp *Jz_flat, FPinterp *rhon_flat, FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat, int npmax)
+__global__ void interP2G_kernel( 
+    FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, 
+    FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat, 
+    int nxn, int nyn, int nzn, double xStart, double yStart, double zStart, 
+    FPfield invdx, FPfield invdy, FPfield invdz, FPfield invVOL, 
+    FPinterp* Jx_flat, FPinterp* Jy_flat, FPinterp *Jz_flat, 
+    FPinterp *rhon_flat, 
+    FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat, 
+    int npmax
+)
 {
 
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
     if(idx >= npmax)
     {
-        printf("Early return. Old threadId = %d, npmax = %d\n", 
+        printf("Early return. idx = %d, npmax = %d\n", 
         idx, npmax);
         return;
     }
