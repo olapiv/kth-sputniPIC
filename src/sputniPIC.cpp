@@ -170,7 +170,8 @@ int main(int argc, char **argv){
         // interpolate species
         for (int is=0; is < param.ns; is++) {
             // interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
-            interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
+            // interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
+            interpP2G_GPU_stream(&partGPU[is],&idsGPU[is],&grd);
         }
         // apply BC to interpolated densities
         for (int is=0; is < param.ns; is++) {
