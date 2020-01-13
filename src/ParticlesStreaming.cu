@@ -80,7 +80,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "BATCH!" << std::endl;
+        std::cout << "batch number: " << i << std::endl;
 
         cudaStreamCreate(&cudaStreams[i]);
 
@@ -90,22 +90,32 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         std::cout << "num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
+        cudaError_t cudaMallocHostStatus;
         if (number_of_batches > 1) {
-            cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
-            cudaMallocHost(&&(part->x[start_index_batch]), batch_size);
-            cudaMallocHost(&&(part->z[start_index_batch]), batch_size);
-            cudaMallocHost(&&(part->u[start_index_batch]), batch_size);
-            cudaMallocHost(&&(part->v[start_index_batch]), batch_size);
-            cudaMallocHost(&&(part->w[start_index_batch]), batch_size);
-            cudaMallocHost(&&(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp));
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->x[start_index_batch]), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->z[start_index_batch]), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->u[start_index_batch]), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->v[start_index_batch]), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->w[start_index_batch]), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&&(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp));
 
-            // cudaMallocHost(&(part->y + start_index_batch), batch_size);
-            // cudaMallocHost(&(part->x + start_index_batch), batch_size);
-            // cudaMallocHost(&(part->z + start_index_batch), batch_size);
-            // cudaMallocHost(&(part->u + start_index_batch), batch_size);
-            // cudaMallocHost(&(part->v + start_index_batch), batch_size);
-            // cudaMallocHost(&(part->w + start_index_batch), batch_size);
-            // cudaMallocHost(&(part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp));
+            // cudaMallocHostStatus = cudaMallocHost(&(part->y + start_index_batch), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&(part->x + start_index_batch), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&(part->z + start_index_batch), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&(part->u + start_index_batch), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&(part->v + start_index_batch), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&(part->w + start_index_batch), batch_size);
+            // cudaMallocHostStatus = cudaMallocHost(&(part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp));
+
+            // if (cudaMallocHostStatus != cudaSuccess) {
+            //     printf("Error allocating pinned host memory\n");
+            //     cudaDeviceSynchronize();
+            //     cudaError_t status = cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
+            //     if (status != cudaSuccess) {
+            //         exit(1);
+            //     }
+            // }
         }
         
         cudaMalloc(&x_dev, batch_size);
@@ -286,8 +296,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
 
     for(i = 0; i < number_of_batches; i++)
     {
-
-        std::cout << "BATCH!" << std::endl;
+        std::cout << "batch number: " << i << std::endl;
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes

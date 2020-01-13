@@ -87,7 +87,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     for(i = 0; i < number_of_batches; i++)
     {
 
-            std::cout << "BATCH!" << std::endl;
+            std::cout << "batch number: " << i << std::endl;
 
             int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
             size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
@@ -127,7 +127,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
                     param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
                     dt_sub_cycling, dto2, qomdt2, 
                     part->NiterMover, 
-                    part->nop  // TODO: Change this to number_of_particles_batch
+                    part->number_of_particles_batch
                 );
                 cudaDeviceSynchronize();
 
@@ -256,7 +256,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "BATCH!" << std::endl;
+        std::cout << "batch number: " << i << std::endl;
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
@@ -289,7 +289,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
             grd->invdx, grd->invdy, grd->invdz, grd->invVOL, 
             Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, 
             pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
-            part->nop  // TODO: Change this to number_of_particles_batch
+            number_of_particles_batch
         );
         cudaDeviceSynchronize();
 
