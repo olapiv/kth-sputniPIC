@@ -160,8 +160,8 @@ int main(int argc, char **argv){
         iMoverGPU = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++) {
             // mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
-            mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
-            // mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
+            //mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
+            mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
         }
         eMoverGPU += (cpuSecond() - iMoverGPU); // stop timer for mover
         

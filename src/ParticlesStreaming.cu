@@ -3,7 +3,7 @@
 #include "ParticlesStreaming.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
-#define NUMBER_OF_PARTICLES_PER_BATCH 100000
+#define NUMBER_OF_PARTICLES_PER_BATCH 1024000
 
 
 /** particle mover for GPU with batching */
@@ -60,7 +60,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
     // implement mini-batching only in the case where the free space on the GPU isn't enough
 
-    if(free_bytes > total_size_particles)
+    if(free_bytes < total_size_particles)
     {
         start_index_batch = 0;
         end_index_batch = part->npmax - 1; // set end_index to the last particle as we are processing in in one batch
@@ -80,6 +80,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         std::cout << "batch number: " << i << std::endl;
 
         cudaStreamCreate(&cudaStreams[i]);
+        FPpart * copy_ptr_pinned = NULL;
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
@@ -88,31 +89,27 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
         cudaError_t cudaMallocHostStatus;
-        if (number_of_batches > 1) {
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->x[start_index_batch]), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->z[start_index_batch]), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->u[start_index_batch]), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->v[start_index_batch]), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->w[start_index_batch]), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&&(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp));
 
-            cudaMallocHostStatus = cudaMallocHost(&(part->y + start_index_batch), batch_size);
-            cudaMallocHostStatus = cudaMallocHost(&(part->x + start_index_batch), batch_size);
-            cudaMallocHostStatus = cudaMallocHost(&(part->z + start_index_batch), batch_size);
-            cudaMallocHostStatus = cudaMallocHost(&(part->u + start_index_batch), batch_size);
-            cudaMallocHostStatus = cudaMallocHost(&(part->v + start_index_batch), batch_size);
-            cudaMallocHostStatus = cudaMallocHost(&(part->w + start_index_batch), batch_size);
-            cudaMallocHostStatus = cudaMallocHost(&(part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp));
+        
+        if (number_of_batches > 1)  {
 
-            // if (cudaMallocHostStatus != cudaSuccess) {
-            //     printf("Error allocating pinned host memory\n");
-            //     cudaDeviceSynchronize();
-            //     cudaError_t status = cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
-            //     if (status != cudaSuccess) {
-            //         exit(1);
-            //     }
-            // }
+            cudaMallocHostStatus = cudaHostRegister(&part->x +start_index_batch, batch_size, cudaHostRegisterMapped);
+            cudaMallocHostStatus = cudaHostRegister(&part->y +start_index_batch, batch_size, cudaHostRegisterMapped);
+            cudaMallocHostStatus = cudaHostRegister(&part->z +start_index_batch, batch_size, cudaHostRegisterMapped);
+            cudaMallocHostStatus = cudaHostRegister(&part->u +start_index_batch, batch_size, cudaHostRegisterMapped);
+            cudaMallocHostStatus = cudaHostRegister(&part->v +start_index_batch, batch_size, cudaHostRegisterMapped);
+            cudaMallocHostStatus = cudaHostRegister(&part->w +start_index_batch, batch_size, cudaHostRegisterMapped);
+            cudaMallocHostStatus = cudaHostRegister(&part->q +start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterMapped);
+
+            /*
+            if (cudaMallocHostStatus != cudaSuccess) {
+                 printf("Error allocating pinned host memory\n");
+                 cudaDeviceSynchronize();
+                 cudaError_t status = cudaMallocHost(&&(part->y[start_index_batch]), batch_size);
+                 if (status != cudaSuccess) {
+                     exit(1);
+                 }
+             }*/
         }
         
         cudaMalloc(&x_dev, batch_size);
@@ -145,7 +142,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         for (int i_sub=0; i_sub < part->n_sub_cycles; i_sub++){
 
             // Call GPU kernel
-            single_particle_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>(
+            single_particle_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB, 0, cudaStreams[i]>>>(
                 x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
                 XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                 grd->nxn, grd->nyn, grd->nzn, 
@@ -171,6 +168,12 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             cudaMemcpyAsync((part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
             cudaMemcpyAsync((part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
             cudaMemcpyAsync((part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaHostUnregister(&part->x);
+            cudaHostUnregister(&part->y);
+            cudaHostUnregister(&part->z);
+            cudaHostUnregister(&part->u);
+            cudaHostUnregister(&part->v);
+            cudaHostUnregister(&part->w);
         } else {
             cudaMemcpy( (part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost);
             cudaMemcpy( (part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost);
