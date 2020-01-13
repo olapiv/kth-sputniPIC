@@ -74,9 +74,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     }
        
     cudaStream_t *cudaStreams = new cudaStream_t[number_of_batches];
-    for(i = 0; i < number_of_batches; i++) {
-        cudaStreamCreate(&cudaStreams[i]);
-    }
 
     for(i = 0; i < number_of_batches; i++)
     {
@@ -100,13 +97,13 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             // cudaMallocHostStatus = cudaMallocHost(&&(part->w[start_index_batch]), batch_size);
             // cudaMallocHostStatus = cudaMallocHost(&&(part->q[start_index_batch]), number_of_particles_batch * sizeof(FPinterp));
 
-            // cudaMallocHostStatus = cudaMallocHost(&(part->y + start_index_batch), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&(part->x + start_index_batch), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&(part->z + start_index_batch), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&(part->u + start_index_batch), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&(part->v + start_index_batch), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&(part->w + start_index_batch), batch_size);
-            // cudaMallocHostStatus = cudaMallocHost(&(part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp));
+            cudaMallocHostStatus = cudaMallocHost(&(part->y + start_index_batch), batch_size);
+            cudaMallocHostStatus = cudaMallocHost(&(part->x + start_index_batch), batch_size);
+            cudaMallocHostStatus = cudaMallocHost(&(part->z + start_index_batch), batch_size);
+            cudaMallocHostStatus = cudaMallocHost(&(part->u + start_index_batch), batch_size);
+            cudaMallocHostStatus = cudaMallocHost(&(part->v + start_index_batch), batch_size);
+            cudaMallocHostStatus = cudaMallocHost(&(part->w + start_index_batch), batch_size);
+            cudaMallocHostStatus = cudaMallocHost(&(part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp));
 
             // if (cudaMallocHostStatus != cudaSuccess) {
             //     printf("Error allocating pinned host memory\n");
