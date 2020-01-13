@@ -54,7 +54,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6; // for x,y,z,u,v,w
+    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp); // for x,y,z,u,v,w and q
     
     start_index_batch = 0, end_index_batch = 0;
 
@@ -271,7 +271,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
     cudaMemcpy(ZN_flat_dev, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6; // for x,y,z,u,v,w
+    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp); // for x,y,z,u,v,w and q
     
     start_index_batch = 0, end_index_batch = 0;
 

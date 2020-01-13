@@ -64,7 +64,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6; // for x,y,z,u,v,w
+    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp); // for x,y,z,u,v,w and q
     
     start_index_batch = 0, end_index_batch = 0;
 
@@ -82,7 +82,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
         end_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH - 1; // NUM_PARTICLES_PER_BATCH is a hyperparameter set by tuning
         number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH + 1; // works because of integer division
     }
-       
+    
 
     for(i = 0; i < number_of_batches; i++)
     {
@@ -235,7 +235,7 @@ void interpP2G_GPU_batch(struct particles* part, struct interpDensSpecies* ids, 
 
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6; // for x,y,z,u,v,w
+    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp); // for x,y,z,u,v,w and q
     
     start_index_batch = 0, end_index_batch = 0;
 
