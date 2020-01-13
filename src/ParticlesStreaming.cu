@@ -157,7 +157,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
                 param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
                 dt_sub_cycling, dto2, qomdt2, 
                 part->NiterMover, 
-                part->nop  // TODO: Change this to number_of_particles_batch
+                number_of_particles_batch
             );
 
         } // end of one particle
@@ -326,7 +326,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
             grd->invdx, grd->invdy, grd->invdz, grd->invVOL, 
             Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, 
             pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
-            part->nop  // TODO: Change this to number_of_particles_batch
+            number_of_particles_batch
         );
         cudaDeviceSynchronize();
 
