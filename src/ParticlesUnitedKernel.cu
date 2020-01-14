@@ -1,4 +1,11 @@
-/* __global__ void united_kernel(
+#include "Particles.h"
+#include "ParticlesUnitedKernel.h"
+#include "Alloc.h"
+#include <cuda.h>
+#include <cuda_runtime.h>
+#define TPB 64
+
+__global__ void united_kernel(
     // common parameters
     FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, 
     FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat,
@@ -371,5 +378,3 @@
             }
 
 }
-
-*/
