@@ -29,16 +29,15 @@ __global__ void united_kernel(
     FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat
 ){
     
-
-    //////////////////////////////////
-    ///// single_particle_kernel /////
-    //////////////////////////////////
-
     int idx = blockIdx.x * blockDim.x + threadIdx.x + stream_offset; 
     if(idx >= npmax)
     {
         return;
     }
+    
+    //////////////////////////////////
+    ///// single_particle_kernel /////
+    //////////////////////////////////
     
     for (int i_sub=0; i_sub <  n_sub_cycles; i_sub++){
 
@@ -505,13 +504,10 @@ void mover_AND_interpP2G_stream(
     {
         std::cout << "  batch number: " << i << std::endl;
 
-
         long int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size_per_attribute = number_of_particles_batch * sizeof(FPpart); // size of the attribute per batch in bytes x,z,y,u,v,w
 
         long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
-        
-        int flag_leftover = 0;
 
         std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
         std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
@@ -543,12 +539,10 @@ void mover_AND_interpP2G_stream(
         //if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
         //{
             number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-            flag_leftover = 1;
         //}
         //else
         //{
         //   number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-        //   flag_leftover = 0;
         //}
 
         for (int j = 0; j < number_of_streams; j++)

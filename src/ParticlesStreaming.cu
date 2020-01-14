@@ -92,8 +92,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         size_t batch_size_per_attribute = number_of_particles_batch * sizeof(FPpart); // size of the attribute per batch in bytes x,z,y,u,v,w
 
         long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
-        
-        int flag_leftover = 0;
 
         std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
         std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
@@ -125,12 +123,10 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
         {
             number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-            flag_leftover = 1;
         }
         else
         {
             number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-            flag_leftover = 0;
         }
 
         for (int j = 0; j < number_of_streams; j++)
