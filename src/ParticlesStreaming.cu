@@ -96,7 +96,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         int flag_leftover = 0;
 
         std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
-        std::cout << "start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
+        std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
 
         cudaError_t cudaMallocHostStatus;
 
@@ -345,13 +345,13 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "batch number: " << i << std::endl;
+        std::cout << "  batch number: " << i << std::endl;
 
         int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
 
-        std::cout << "num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
-        std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
+        std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
+        std::cout << "  start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
 
         cudaError_t cudaMallocHostStatus;
         if (number_of_batches > 1)  {
