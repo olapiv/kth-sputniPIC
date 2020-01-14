@@ -91,8 +91,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
         long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
 
-        int flag_leftover = 0;
-
         cudaMalloc(&x_dev, batch_size_per_attribute);
         cudaMalloc(&y_dev, batch_size_per_attribute);
         cudaMalloc(&z_dev, batch_size_per_attribute);
@@ -319,7 +317,6 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
         if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
         {
             number_of_streams = NUMBER_OF_STREAMS_PER_BATCH + 1;
-            flag_leftover = 1;
         }
         else
         {
