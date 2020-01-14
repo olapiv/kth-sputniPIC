@@ -498,17 +498,15 @@ void mover_AND_interpP2G_stream(
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "  batch number: " << i << std::endl;
+        //std::cout << "  batch number: " << i << std::endl;
 
         long int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size_per_attribute = number_of_particles_batch * sizeof(FPpart); // size of the attribute per batch in bytes x,z,y,u,v,w
 
         long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
 
-        std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
-        std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
-
-        cudaError_t cudaMallocHostStatus;
+        //std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
+        //std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
 
         /*
             if (cudaMallocHostStatus != cudaSuccess) {
@@ -552,8 +550,8 @@ void mover_AND_interpP2G_stream(
             number_of_particles_stream = end_index_stream - start_index_stream + 1;
             stream_size_per_attribute = number_of_particles_stream * sizeof(FPpart); // for x,y,z,u,v,w
 
-            std::cout << "      num_of_particles_stream: " << number_of_particles_stream << "stream_size : " << stream_size_per_attribute << std::endl;
-            std::cout << "      start_index: " << start_index_stream << " end_index: " << end_index_stream << std::endl;
+            //std::cout << "      num_of_particles_stream: " << number_of_particles_stream << "stream_size : " << stream_size_per_attribute << std::endl;
+            //std::cout << "      start_index: " << start_index_stream << " end_index: " << end_index_stream << std::endl;
         
             stream_offset = start_index_stream;
             offset = stream_offset + start_index_batch; // batch offset + stream_offset
@@ -566,17 +564,17 @@ void mover_AND_interpP2G_stream(
             cudaMemcpyAsync(&w_dev[stream_offset], &part->w[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&q_dev[stream_offset], &part->q[offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
 
-            std::cout << "      Before loop;" << " Offset: " << offset << " # of elems: " << number_of_particles_stream
-                    << " Stream index: " << stream_idx << std::endl;
+            //std::cout << "      Before loop;" << " Offset: " << offset << " # of elems: " << number_of_particles_stream
+            //       << " Stream index: " << stream_idx << std::endl;
 
             // Call GPU kernel
-            united_kernel<<<(number_of_particles_batch + TPB - 1)/TPB, TPB>>>(
+            united_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB>>>(
                 x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
                 XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                 grd->nxn, grd->nyn, grd->nzn, 
                 grd->xStart, grd->yStart, grd->zStart, 
                 grd->invdx, grd->invdy, grd->invdz, grd->invVOL,
-                number_of_particles_batch, part->NiterMover, stream_offset,
+                number_of_particles_stream, part->NiterMover, stream_offset,
 
                 grd->Lx, grd->Ly, grd->Lz, 
                 Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, 
