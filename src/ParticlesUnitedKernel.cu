@@ -395,7 +395,7 @@ void mover_AND_interpP2G_stream(
 {
 
     // print species and subcycling
-    std::cout << "***GPU MOVER with SUBCYCLYING "<< param->n_sub_cycles << " - species " << part->species_ID << " ***" << std::endl;
+    std::cout << "***GPU mover_AND_interpP2G_stream - species " << part->species_ID << " ***" << std::endl;
 
     // auxiliary variables
     FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
@@ -536,15 +536,6 @@ void mover_AND_interpP2G_stream(
         cudaMalloc(&w_dev, batch_size_per_attribute);
         cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
-        // pin memory for async copy
-        cudaMallocHostStatus = cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
-        cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
-        cudaMallocHostStatus = cudaHostRegister(&part->z + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
-        cudaMallocHostStatus = cudaHostRegister(&part->u + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
-        cudaMallocHostStatus = cudaHostRegister(&part->v + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
-        cudaMallocHostStatus = cudaHostRegister(&part->w + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
-        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterPortable);
-
         start_index_stream = 0;
         end_index_stream = start_index_stream + (number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH) - 1;
         max_num_particles_per_stream = number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH;            
@@ -634,15 +625,6 @@ void mover_AND_interpP2G_stream(
         {
             cudaStreamDestroy(cudaStreams[j]);
         }
-
-            
-        cudaHostUnregister(&part->x + start_index_batch);
-        cudaHostUnregister(&part->y + start_index_batch);
-        cudaHostUnregister(&part->z + start_index_batch);
-        cudaHostUnregister(&part->u + start_index_batch);
-        cudaHostUnregister(&part->v + start_index_batch);
-        cudaHostUnregister(&part->w + start_index_batch);
-        cudaHostUnregister(&part->q + start_index_batch);
 
         cudaFree(x_dev);
         cudaFree(y_dev);
