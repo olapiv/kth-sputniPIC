@@ -120,29 +120,55 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
         // pin memory for async copy
         
+        FPpart *x_pinned = NULL, *y_pinned = NULL, *z_pinned = NULL, *u_pinned = NULL, *v_pinned = NULL, *w_pinned = NULL;
+        FPinterp * q_pinned = NULL;
         
-        cudaMallocHostStatus = cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
+        memcpy(x_pinned, &part->x + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&x_pinned, batch_size_per_attribute, cudaHostRegisterPortable);
+
+        memcpy(y_pinned, &part->y + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&y_pinned, batch_size_per_attribute, cudaHostRegisterPortable);
+
+        memcpy(z_pinned, &part->z + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&z_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
+
+        memcpy(u_pinned, &part->u + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&u_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
+
+        memcpy(v_pinned, &part->v + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&v_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
+
+        memcpy(w_pinned, &part->w + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&w_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
+
+        memcpy(q_pinned, &part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp));
+        cudaMallocHostStatus = cudaHostAlloc((void**)&q_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
+
+        /*cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
+
+        memcpy(x_pinned, &part->x + start_index_batch, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&x_pinned, batch_size_per_attribute, flags);
         cudaMallocHostStatus = cudaHostRegister(&part->z + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->u + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->v + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->w + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterMapped);
+        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterMapped);*/
 
         start_index_stream = 0;
         end_index_stream = start_index_stream + (number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH) - 1;
         max_num_particles_per_stream = number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH;            
 
-        //if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
-        //{
-            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+        if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
+        {
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH + 1;
             flag_leftover = 1;
-        //}
-        //else
-        //{
-         //   number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-         //   flag_leftover = 0;
-        //}
+        }
+        else
+        {
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+            flag_leftover = 0;
+        }
 
         for (int j = 0; j < number_of_streams; j++)
         {
@@ -155,9 +181,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             number_of_particles_stream = end_index_stream - start_index_stream + 1;
             stream_size_per_attribute = number_of_particles_stream * sizeof(FPpart); // for x,y,z,u,v,w
 
-            std::cout << "      num_of_particles_stream: " << number_of_particles_stream << "stream_size : " << stream_size_per_attribute << std::endl;
-            std::cout << "      start_index: " << start_index_stream << " end_index: " << end_index_stream << std::endl;
-        
             stream_offset = start_index_stream;
             offset = stream_offset + start_index_batch; // batch offset + stream_offset
 
@@ -168,9 +191,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             cudaMemcpyAsync(&v_dev[stream_offset], &part->v[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&w_dev[stream_offset], &part->w[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&q_dev[stream_offset], &part->q[offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-
-            std::cout << "      Before loop;" << " Offset: " << offset << " # of elems: " << number_of_particles_stream
-                      << " Stream index: " << stream_idx << std::endl;
 
             // start subcycling
             for (int i_sub=0; i_sub < part->n_sub_cycles; i_sub++){
@@ -213,9 +233,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             else
             {
                 end_index_stream += max_num_particles_per_stream;
-            }
-    
-            
+            } 
 
         }
 
@@ -225,13 +243,21 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         }
 
         
-        cudaHostUnregister(&part->x + start_index_batch);
+        /*cudaHostUnregister(&part->x + start_index_batch);
         cudaHostUnregister(&part->y + start_index_batch);
         cudaHostUnregister(&part->z + start_index_batch);
         cudaHostUnregister(&part->u + start_index_batch);
         cudaHostUnregister(&part->v + start_index_batch);
         cudaHostUnregister(&part->w + start_index_batch);
-        cudaHostUnregister(&part->q + start_index_batch);
+        cudaHostUnregister(&part->q + start_index_batch);*/
+
+        cudaFreeHost(x_pinned);
+        cudaFreeHost(y_pinned);
+        cudaFreeHost(z_pinned);
+        cudaFreeHost(u_pinned);
+        cudaFreeHost(v_pinned);
+        cudaFreeHost(w_pinned);
+        cudaFreeHost(q_pinned);
 
         cudaFree(x_dev);
         cudaFree(y_dev);
