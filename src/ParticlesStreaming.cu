@@ -124,25 +124,20 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         FPinterp * q_pinned = NULL;
         
         memcpy(x_pinned, &part->x + start_index_batch, batch_size_per_attribute);
-        cudaMallocHostStatus = cudaHostAlloc((void**)&x_pinned, batch_size_per_attribute, cudaHostRegisterPortable);
-
         memcpy(y_pinned, &part->y + start_index_batch, batch_size_per_attribute);
-        cudaMallocHostStatus = cudaHostAlloc((void**)&y_pinned, batch_size_per_attribute, cudaHostRegisterPortable);
-
         memcpy(z_pinned, &part->z + start_index_batch, batch_size_per_attribute);
-        cudaMallocHostStatus = cudaHostAlloc((void**)&z_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
-
         memcpy(u_pinned, &part->u + start_index_batch, batch_size_per_attribute);
-        cudaMallocHostStatus = cudaHostAlloc((void**)&u_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
-
         memcpy(v_pinned, &part->v + start_index_batch, batch_size_per_attribute);
-        cudaMallocHostStatus = cudaHostAlloc((void**)&v_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
-
         memcpy(w_pinned, &part->w + start_index_batch, batch_size_per_attribute);
-        cudaMallocHostStatus = cudaHostAlloc((void**)&w_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
-
         memcpy(q_pinned, &part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp));
-        cudaMallocHostStatus = cudaHostAlloc((void**)&q_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
+
+        cudaMallocHostStatus = cudaHostAlloc((void**)&x_pinned, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&y_pinned, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&z_pinned, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&u_pinned, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&v_pinned, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&w_pinned, batch_size_per_attribute);
+        cudaMallocHostStatus = cudaHostAlloc((void**)&q_pinned, number_of_particles_batch * sizeof(FPinterp));
 
         /*cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
