@@ -537,13 +537,13 @@ void mover_AND_interpP2G_stream(
         cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
         // pin memory for async copy
-        cudaMallocHostStatus = cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->z + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->u + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->v + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->w + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterMapped);
+        cudaMallocHostStatus = cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
+        cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
+        cudaMallocHostStatus = cudaHostRegister(&part->z + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
+        cudaMallocHostStatus = cudaHostRegister(&part->u + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
+        cudaMallocHostStatus = cudaHostRegister(&part->v + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
+        cudaMallocHostStatus = cudaHostRegister(&part->w + start_index_batch, batch_size_per_attribute, cudaHostRegisterPortable);
+        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterPortable);
 
         start_index_stream = 0;
         end_index_stream = start_index_stream + (number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH) - 1;
@@ -614,7 +614,7 @@ void mover_AND_interpP2G_stream(
             cudaMemcpyAsync(&part->u[offset], &u_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&part->v[offset], &v_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&part->w[offset], &w_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&part->q[offset], &q_dev[stream_offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            // cudaMemcpyAsync(&part->q[offset], &q_dev[stream_offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
 
             cudaStreamSynchronize(cudaStreams[stream_idx]);
 
@@ -628,9 +628,6 @@ void mover_AND_interpP2G_stream(
             {
                 end_index_stream += max_num_particles_per_stream;
             }
-        
-                
-
         }
     
         for(int j = 0; j < number_of_streams; j++)
