@@ -35,7 +35,7 @@ __global__ void united_kernel(
 );
 
 /** particle mover for GPU without batching*/
-int mover_AND_interpP2G_stream(
+void mover_AND_interpP2G_stream(
     struct particles* part, 
     struct EMfield* field, 
     struct grid* grd, 

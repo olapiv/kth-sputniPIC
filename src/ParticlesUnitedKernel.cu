@@ -4,6 +4,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #define TPB 64
+#define NUMBER_OF_PARTICLES_PER_BATCH 1024000
+#define MAX_NUMBER_OF_STREAMS 5
+#define NUMBER_OF_STREAMS_PER_BATCH 4
 
 // Input parameters: 1) Common parameters 2) Only single_particle_kernel 3) Only interP2G_kernel 
 __global__ void united_kernel(
@@ -401,7 +404,13 @@ void mover_AND_interpP2G_stream(
 
     FPpart *x_dev = NULL, *y_dev = NULL, *z_dev = NULL, *u_dev = NULL, *v_dev = NULL, *w_dev = NULL;
     FPinterp *q_dev = NULL;
-    FPfield *XN_flat_dev = NULL, *YN_flat_dev = NULL, *ZN_flat_dev = NULL, *Ex_flat_dev = NULL, *Ey_flat_dev = NULL, *Ez_flat_dev = NULL, *Bxn_flat_dev = NULL, *Byn_flat_dev, *Bzn_flat_dev = NULL;
+    FPfield *XN_flat_dev = NULL, *YN_flat_dev = NULL, *ZN_flat_dev = NULL;
+
+    // mover_PC:
+    FPfield *Ex_flat_dev = NULL, *Ey_flat_dev = NULL, *Ez_flat_dev = NULL, *Bxn_flat_dev = NULL, *Byn_flat_dev, *Bzn_flat_dev = NULL;
+
+    // interpP2G:
+    FPinterp *Jx_flat_dev = NULL, *Jy_flat_dev = NULL, *Jz_flat_dev = NULL, *rhon_flat_dev = NULL, *pxx_flat_dev = NULL, *pxy_flat_dev = NULL, *pxz_flat_dev = NULL, *pyy_flat_dev = NULL, *pyz_flat_dev = NULL, *pzz_flat_dev = NULL;
 
     size_t free_bytes = 0;
 
@@ -585,14 +594,14 @@ void mover_AND_interpP2G_stream(
                 grd->nxn, grd->nyn, grd->nzn, 
                 grd->xStart, grd->yStart, grd->zStart, 
                 grd->invdx, grd->invdy, grd->invdz, grd->invVOL,
-                number_of_particles_batch, part->NiterMover, stream_offset
+                number_of_particles_batch, part->NiterMover, stream_offset,
 
                 grd->Lx, grd->Ly, grd->Lz, 
                 Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, 
                 Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, 
                 param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
                 dt_sub_cycling, dto2, qomdt2,
-                part->n_sub_cycles
+                part->n_sub_cycles,
                 
                 Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, 
                 pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
