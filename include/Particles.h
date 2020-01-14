@@ -71,7 +71,7 @@ __global__ void single_particle_kernel(
     FPfield* Ex_flat, FPfield* Ey_flat, FPfield* Ez_flat, FPfield* Bxn_flat, FPfield* Byn_flat, FPfield* Bzn_flat, 
     bool PERIODICX, bool PERIODICY, bool PERIODICZ, 
     FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2, 
-    int NiterMover, int npmax
+    int NiterMover, int npmax, int stream_offset = 0    
 );
 
 

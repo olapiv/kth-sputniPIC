@@ -402,10 +402,13 @@ __global__ void single_particle_kernel(
     FPfield* Bxn_flat, FPfield* Byn_flat, FPfield* Bzn_flat, 
     bool PERIODICX, bool PERIODICY, bool PERIODICZ, 
     FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2, 
-    int NiterMover, int npmax
+    int NiterMover, int npmax, int stream_offset
 ){
+
+    /* The stream_offset is to account for streaming, by default it is 0 and the result below results in idx = blockIdx.x * blockDim.x + threadIdx.x. 
+        When streaming is used, the size of each array (x,y,z etc) is defined in terms of the stream size and hence we need to recalculate the offset to be new_global_offset = stream_offset + blockIdx.x * blockDim.x + threadIdx.x. */
     
-    int idx = blockIdx.x*blockDim.x + threadIdx.x;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x + stream_offset; 
     int flat_idx = 0;
     
     if(idx >= npmax)
