@@ -718,12 +718,12 @@ __global__ void interP2G_kernel(
     FPfield invdx, FPfield invdy, FPfield invdz, FPfield invVOL,
     FPinterp* Jx_flat, FPinterp* Jy_flat, FPinterp *Jz_flat, FPinterp *rhon_flat,
     FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat,
-    int npmax
+    int npmax, int stream_offset
 )
 {
 
-    int idx = blockIdx.x*blockDim.x + threadIdx.x;
-    if(idx >= npmax)
+    int idx = blockIdx.x*blockDim.x + threadIdx.x + stream_offset;
+    if( (idx - stream_offset) >= npmax)
     {
         return;
     }

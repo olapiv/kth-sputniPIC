@@ -29,7 +29,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
     int i, total_size_particles, start_index_batch, end_index_batch, number_of_batches;
 
-    // Calculation done later to compute free space after allocating space on the GPU for 
+    // Calculation done later to compute free space after allocating space on the GPU fo
     // other variables below, the assumption is that these variables fit in the GPU memory 
     // and mini batching is implemented only taking into account particles
 
@@ -85,16 +85,13 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "  batch number: " << i << std::endl;
-
 
         long int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size_per_attribute = number_of_particles_batch * sizeof(FPpart); // size of the attribute per batch in bytes x,z,y,u,v,w
 
         long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
 
-        std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
-        std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
+        int flag_leftover = 0;
 
         cudaMalloc(&x_dev, batch_size_per_attribute);
         cudaMalloc(&y_dev, batch_size_per_attribute);
@@ -181,9 +178,6 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             {
                 end_index_stream += max_num_particles_per_stream;
             } 
-
-            std::cout << "YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO";
-            std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
 
         }
 
@@ -281,7 +275,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
     cudaMemcpy(ZN_flat_dev, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp); // for x,y,z,u,v,w and q
+    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp) * part->npmax; // for x,y,z,u,v,w and q
     
     start_index_batch = 0, end_index_batch = 0;
 
@@ -299,22 +293,16 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
         end_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH - 1; // NUM_PARTICLES_PER_BATCH is a hyperparameter set by tuning
         number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH + 1; // works because of integer division
     }
-       
-    cudaStream_t *cudaStreams = new cudaStream_t[number_of_batches];
+
+    cudaStream_t cudaStreams[MAX_NUMBER_OF_STREAMS];
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "  batch number: " << i << std::endl;
 
         long int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
         size_t batch_size = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
 
         long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
-
-        std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size << std::endl;
-        std::cout << "  start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
-
-        cudaError_t cudaMallocHostStatus;
 
         cudaMalloc(&x_dev, batch_size);
         cudaMalloc(&y_dev, batch_size);
@@ -330,7 +318,8 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
 
         if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
         {
-            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH + 1;
+            flag_leftover = 1;
         }
         else
         {
@@ -360,7 +349,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
             cudaMemcpyAsync(&q_dev[stream_offset], &part->q[offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
 
             // Call GPU kernel
-            interP2G_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB, 0, cudaStreams[i]>>>(
+            interP2G_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB, 0, cudaStreams[stream_idx]>>>(
                 x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
                 XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                 grd->nxn, grd->nyn, grd->nzn, 
@@ -368,7 +357,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
                 grd->invdx, grd->invdy, grd->invdz, grd->invVOL, 
                 Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, 
                 pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
-                number_of_particles_stream
+                number_of_particles_stream, stream_offset
             );
 
             cudaMemcpyAsync(&part->x[offset], &x_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
@@ -404,7 +393,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
         cudaFree(u_dev);
         cudaFree(v_dev);
         cudaFree(w_dev);
-        //cudaFree(q_dev);
+        cudaFree(q_dev);
 
         // Update indices for next batch
         start_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH;
