@@ -5,27 +5,26 @@
 #include <cuda_runtime.h>
 #define TPB 64
 
+// Input parameters: 1) Common parameters 2) Only single_particle_kernel 3) Only interP2G_kernel 
 __global__ void united_kernel(
-    // common parameters
     FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, 
     FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat,
     int nxn, int nyn, int nzn,
     double xStart, double yStart, double zStart,
     FPfield invdx, FPfield invdy, FPfield invdz, FPfield invVOL,
-    int npmax, int NiterMover int stream_offset,
+    int npmax, int NiterMover, int stream_offset,
 
-    // single_particle_kernel 
     double Lx, double Ly, double Lz,
     FPfield* Ex_flat, FPfield* Ey_flat, FPfield* Ez_flat,
     FPfield* Bxn_flat, FPfield* Byn_flat, FPfield* Bzn_flat,
     bool PERIODICX, bool PERIODICY, bool PERIODICZ,
     FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2,
-    int n_sub_cycles
+    int n_sub_cycles,
 
-    // interP2G_kernel 
     FPinterp* Jx_flat, FPinterp* Jy_flat, FPinterp *Jz_flat, FPinterp *rhon_flat,
     FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat
 ){
+    
 
     //////////////////////////////////
     ///// single_particle_kernel /////
