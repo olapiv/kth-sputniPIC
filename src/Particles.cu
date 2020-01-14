@@ -4,6 +4,18 @@
 #include <cuda_runtime.h>
 #define TPB 64
 
+static void HandleError( cudaError_t err,
+                         const char *file,
+                         int line ) {
+    if (err != cudaSuccess) {
+        printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
+                file, line );
+        exit( EXIT_FAILURE );
+    }
+}
+
+#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
+
 /** allocate particle arrays */
 void particle_allocate(struct parameters* param, struct particles* part, int is, bool use_pinned_memory)
 {
@@ -66,13 +78,13 @@ void particle_allocate(struct parameters* param, struct particles* part, int is,
 
     else 
     {
-        cudaHostAlloc(&part->x, sizeof(FPpart) * npmax, cudaHostAllocDefault);
-        cudaHostAlloc(&part->y, sizeof(FPpart) * npmax, cudaHostAllocDefault);
-        cudaHostAlloc(&part->z, sizeof(FPpart) * npmax, cudaHostAllocDefault);
-        cudaHostAlloc(&part->u, sizeof(FPpart) * npmax, cudaHostAllocDefault);
-        cudaHostAlloc(&part->v, sizeof(FPpart) * npmax, cudaHostAllocDefault);
-        cudaHostAlloc(&part->w, sizeof(FPpart) * npmax, cudaHostAllocDefault);
-        cudaHostAlloc(&part->q, sizeof(FPinterp) * npmax, cudaHostAllocDefault);
+        HANDLE_ERROR(cudaHostAlloc(&part->x, sizeof(FPpart) * npmax, cudaHostAllocDefault));
+        HANDLE_ERROR(cudaHostAlloc(&part->y, sizeof(FPpart) * npmax, cudaHostAllocDefault));
+        HANDLE_ERROR(cudaHostAlloc(&part->z, sizeof(FPpart) * npmax, cudaHostAllocDefault));
+        HANDLE_ERROR(cudaHostAlloc(&part->u, sizeof(FPpart) * npmax, cudaHostAllocDefault));
+        HANDLE_ERROR(cudaHostAlloc(&part->v, sizeof(FPpart) * npmax, cudaHostAllocDefault));
+        HANDLE_ERROR(cudaHostAlloc(&part->w, sizeof(FPpart) * npmax, cudaHostAllocDefault));
+        HANDLE_ERROR(cudaHostAlloc(&part->q, sizeof(FPinterp) * npmax, cudaHostAllocDefault));
     }
     
 }
@@ -95,13 +107,13 @@ void particle_deallocate(struct particles* part, bool use_pinned_memory)
     }
     else
     {
-        cudaFreeHost(part->x);
-        cudaFreeHost(part->y);
-        cudaFreeHost(part->z);
-        cudaFreeHost(part->u);
-        cudaFreeHost(part->v);
-        cudaFreeHost(part->w);
-        cudaFreeHost(part->q);
+        HANDLE_ERROR(cudaFreeHost(part->x));
+        HANDLE_ERROR(cudaFreeHost(part->y));
+        HANDLE_ERROR(cudaFreeHost(part->z));
+        HANDLE_ERROR(cudaFreeHost(part->u));
+        HANDLE_ERROR(cudaFreeHost(part->v));
+        HANDLE_ERROR(cudaFreeHost(part->w));
+        HANDLE_ERROR(cudaFreeHost(part->q));
     }    
 }
 

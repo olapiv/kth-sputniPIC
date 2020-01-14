@@ -568,7 +568,7 @@ void mover_AND_interpP2G_stream(
             //       << " Stream index: " << stream_idx << std::endl;
 
             // Call GPU kernel
-            united_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB>>>(
+            united_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB, 0 , cudaStreams[stream_idx]>>>(
                 x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
                 XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                 grd->nxn, grd->nyn, grd->nzn, 
@@ -593,7 +593,6 @@ void mover_AND_interpP2G_stream(
             cudaMemcpyAsync(&part->u[offset], &u_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&part->v[offset], &v_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&part->w[offset], &w_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
-            // cudaMemcpyAsync(&part->q[offset], &q_dev[stream_offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
 
             cudaStreamSynchronize(cudaStreams[stream_idx]);
 
