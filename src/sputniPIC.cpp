@@ -156,13 +156,18 @@ int main(int argc, char **argv){
     
         // set to zero the densities - needed for interpolation
         setZeroDensities(&idnGPU,idsGPU,&grd,param.ns);
+
+        // Everything at once:
+        for (int is=0; is < param.ns; is++) {
+            mover_AND_interpP2G_stream(&partGPU[is], &fieldGPU, &grd, &param, &idsGPU[is]);
+        }
         
         // implicit mover
         iMoverGPU = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++) {
             // mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
-            mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
-            //mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
+            // mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
+            // mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
         }
         eMoverGPU += (cpuSecond() - iMoverGPU); // stop timer for mover
         
@@ -171,7 +176,7 @@ int main(int argc, char **argv){
         // interpolate species
         for (int is=0; is < param.ns; is++) {
             // interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
-            interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
+            // interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
             //interpP2G_GPU_stream(&partGPU[is],&idsGPU[is],&grd);
         }
         // apply BC to interpolated densities
