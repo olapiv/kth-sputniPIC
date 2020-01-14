@@ -1,4 +1,5 @@
 #include "Particles.h"
+#include "ParticlesBatching.h"
 #include "ParticlesUnitedKernel.h"
 #include "Alloc.h"
 #include <cuda.h>
@@ -604,7 +605,7 @@ void mover_AND_interpP2G_stream(
                 part->n_sub_cycles,
                 
                 Jx_flat_dev, Jy_flat_dev, Jz_flat_dev, rhon_flat_dev, 
-                pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev, 
+                pxx_flat_dev , pxy_flat_dev, pxz_flat_dev, pyy_flat_dev, pyz_flat_dev, pzz_flat_dev
             );
 
             cudaMemcpyAsync(&part->x[offset], &x_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
@@ -713,8 +714,6 @@ void mover_AND_interpP2G_stream(
     cudaFree(pyy_flat_dev);
     cudaFree(pyz_flat_dev);
     cudaFree(pzz_flat_dev);
-
-    return(0);
 
 }
 
