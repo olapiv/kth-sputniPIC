@@ -1,9 +1,5 @@
-
-
-
-
-__global__ void united_kernel(
-    /* common parameters */
+/* __global__ void united_kernel(
+    // common parameters
     FPpart* x, FPpart* y, FPpart* z, FPpart* u, FPpart* v, FPpart* w, FPinterp* q, 
     FPfield* XN_flat, FPfield* YN_flat, FPfield* ZN_flat,
     int nxn, int nyn, int nzn,
@@ -11,7 +7,7 @@ __global__ void united_kernel(
     FPfield invdx, FPfield invdy, FPfield invdz, FPfield invVOL,
     int npmax, int NiterMover int stream_offset,
 
-    /* single_particle_kernel */
+    // single_particle_kernel 
     double Lx, double Ly, double Lz,
     FPfield* Ex_flat, FPfield* Ey_flat, FPfield* Ez_flat,
     FPfield* Bxn_flat, FPfield* Byn_flat, FPfield* Bzn_flat,
@@ -19,7 +15,7 @@ __global__ void united_kernel(
     FPpart dt_sub_cycling, FPpart dto2, FPpart qomdt2,
     int n_sub_cycles
 
-    /* interP2G_kernel */
+    // interP2G_kernel 
     FPinterp* Jx_flat, FPinterp* Jy_flat, FPinterp *Jz_flat, FPinterp *rhon_flat,
     FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat
 ){
@@ -36,8 +32,8 @@ __global__ void united_kernel(
     
     for (int i_sub=0; i_sub <  n_sub_cycles; i_sub++){
 
-        /* The stream_offset is to account for streaming, by default it is 0 and the result below results in idx = blockIdx.x * blockDim.x + threadIdx.x. 
-            When streaming is used, the size of each array (x,y,z etc) is defined in terms of the stream size and hence we need to recalculate the offset to be new_global_offset = stream_offset + blockIdx.x * blockDim.x + threadIdx.x. */
+         The stream_offset is to account for streaming, by default it is 0 and the result below results in idx = blockIdx.x * blockDim.x + threadIdx.x. 
+            When streaming is used, the size of each array (x,y,z etc) is defined in terms of the stream size and hence we need to recalculate the offset to be new_global_offset = stream_offset + blockIdx.x * blockDim.x + threadIdx.x. 
 
         int flat_idx = 0;
 
@@ -375,3 +371,5 @@ __global__ void united_kernel(
             }
 
 }
+
+*/

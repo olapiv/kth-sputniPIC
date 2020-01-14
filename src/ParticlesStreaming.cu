@@ -4,7 +4,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #define NUMBER_OF_PARTICLES_PER_BATCH 1024000
-#define MAX_NUMBER_OF_STREAMS 4
+#define MAX_NUMBER_OF_STREAMS 5
+#define NUMBER_OF_STREAMS_PER_BATCH 4
 
 
 /** particle mover for GPU with batching */
@@ -53,7 +54,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     cudaMemcpy(Bzn_flat_dev, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
     free_bytes = queryFreeMemoryOnGPU();
-    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp); // for x,y,z,u,v,w and q
+    total_size_particles = sizeof(FPpart) * part->npmax * 6 + sizeof(FPinterp) * part->npmax; //  for x,y,z,u,v,w and q
     
     start_index_batch = 0, end_index_batch = 0;
 
@@ -69,17 +70,16 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     {
         start_index_batch = 0;
         end_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH - 1; // NUM_PARTICLES_PER_BATCH is a hyperparameter set by tuning
-        if(part->npmax % NUMBER_OF_PARTICLES_PER_BATCH != 0)
-        {
+        //if(part->npmax % NUMBER_OF_PARTICLES_PER_BATCH != 0)
+        //{
             number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH + 1; // works because of integer division
-        }
-        else
+        //}
+        /*else
         {
-            number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH;
-        }
+        //    number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH;
+        }*/
     }
 
-    int num_of_streams = 0;
 
     cudaStream_t cudaStreams[MAX_NUMBER_OF_STREAMS];
 
@@ -87,12 +87,13 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
     {
         std::cout << "batch number: " << i << std::endl;
 
-        cudaStreamCreate(&cudaStreams[i]);
 
         long int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
-        size_t batch_size_per_attribute = number_of_particles_batch * sizeof(FPpart); // size of the batch in bytes
+        size_t batch_size_per_attribute = number_of_particles_batch * sizeof(FPpart); // size of the attribute per batch in bytes x,z,y,u,v,w
 
-        long int max_number_of_particles_stream = 0, stream_size = 0;
+        long int number_of_particles_stream = 0, stream_size_per_attribute = 0, number_of_streams = 0, stream_offset = 0, offset = 0, start_index_stream = 0, end_index_stream = 0, max_num_particles_per_stream = 0;
+        
+        int flag_leftover = 0;
 
         std::cout << "num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
         std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
@@ -118,40 +119,57 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
         // pin memory for async copy
+        
+        
         cudaMallocHostStatus = cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->z + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->u + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->v + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->w + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
-        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterMapped);  
+        cudaMallocHostStatus = cudaHostRegister(&part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp), cudaHostRegisterMapped);
 
+        start_index_stream = 0;
+        end_index_stream = start_index_stream + (number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH) - 1;
+        max_num_particles_per_stream = number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH;            
 
+        //if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
+        //{
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+            flag_leftover = 1;
+        //}
+        //else
+        //{
+         //   number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+         //   flag_leftover = 0;
+        //}
 
-        number_of_particles_stream = number_of_particles_batch / NUMBER_OF_STREAMS;
-
-        stream_size = number_of_particles_stream * sizeof(FPpart) * 6 + number_of_particles_stream * sizeof(FPinterp); // for x,y,z,u,v,w,q
-
-        for (int j = 0; j < NUMBER_OF_STREAMS; j++)
+        for (int j = 0; j < number_of_streams; j++)
         {
             cudaStreamCreate(&cudaStreams[j]);
         }
 
-        for (int stream_idx = 0; stream_idx < NUMBER_OF_STREAMS; stream_idx++)
+        for (int stream_idx = 0; stream_idx < number_of_streams; stream_idx++)
         {
 
-            long int stream_offset = stream_idx * stream_size;
-            long int offset = stream_offset + start_index_batch;
+            number_of_particles_stream = end_index_stream - start_index_stream + 1;
+            stream_size_per_attribute = number_of_particles_stream * sizeof(FPpart); // for x,y,z,u,v,w
 
-            cudaMemcpyAsync(&x_dev + stream_offset, &part->x + offset, stream_size, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&y_dev + stream_offset, &part->y + offset, stream_size, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&z_dev + stream_offset, &part->z + offset, stream_size, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&u_dev + stream_offset, &part->u + offset, stream_size, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&v_dev + stream_offset, &part->v + offset, stream_size, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&w_dev + stream_offset, &part->w + offset, stream_size, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
-            cudaMemcpyAsync(&q_dev + stream_offset, &part->q + offset, number_of_particles_stream * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            std::cout << "num_of_particles_stream: " << number_of_particles_stream << "stream_size : " << stream_size_per_attribute << std::endl;
+            std::cout << "start_index" << start_index_stream << " end_index : " << end_index_stream << std::endl;
+        
+            stream_offset = start_index_stream;
+            offset = stream_offset + start_index_batch; // batch offset + stream_offset
 
-            std::cout << "Before loop" << ". Offset:" << offset << ". # of elems:" << stream_size
+            cudaMemcpyAsync(&x_dev[stream_offset], &part->x[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&y_dev[stream_offset], &part->y[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&z_dev[stream_offset], &part->z[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&u_dev[stream_offset], &part->u[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&v_dev[stream_offset], &part->v[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&w_dev[stream_offset], &part->w[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&q_dev[stream_offset], &part->q[offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
+
+            std::cout << "Before loop" << ". Offset:" << offset << ". # of elems:" << number_of_particles_stream
                       << " Stream index:" << stream_idx << std::endl;
 
             // start subcycling
@@ -159,7 +177,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
             // Call GPU kernel
 
-                single_particle_kernel<<<(stream_size + TPB - 1)/TPB, TPB, 0, cudaStreams[stream_idx]>>>(
+                single_particle_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB, 0, cudaStreams[stream_idx]>>>(
                     x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
                     XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                     grd->nxn, grd->nyn, grd->nzn, 
@@ -176,21 +194,37 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             } // end of one particle
 
 
-            cudaMemcpyAsync(&part->x + offset, &x_dev + stream_offset, stream_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&part->y + offset, &y_dev + stream_offset, stream_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&part->z + offset, &z_dev + stream_offset, stream_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&part->u + offset, &u_dev + stream_offset, stream_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&part->v + offset, &v_dev + stream_offset, stream_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
-            cudaMemcpyAsync(&part->w + offset, &w_dev + stream_offset, stream_size, cudaMemcpyDeviceToHost, cudaStreams[i]);
+            cudaMemcpyAsync(&part->x[offset], &x_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&part->y[offset], &y_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&part->z[offset], &z_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&part->u[offset], &u_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&part->v[offset], &v_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&part->w[offset], &w_dev[stream_offset], stream_size_per_attribute, cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+            cudaMemcpyAsync(&part->q[offset], &q_dev[stream_offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyDeviceToHost, cudaStreams[stream_idx]);
+
             cudaStreamSynchronize(cudaStreams[stream_idx]);
+
+            start_index_stream = start_index_stream + max_num_particles_per_stream;
+    
+            if( (start_index_stream + max_num_particles_per_stream) > number_of_particles_batch)
+            {
+                end_index_stream = number_of_particles_batch - 1;
+            }
+            else
+            {
+                end_index_stream += max_num_particles_per_stream;
+            }
+    
+            
 
         }
 
-        for(int j = 0; j < NUMBER_OF_STREAMS; j++)
+        for(int j = 0; j < number_of_streams; j++)
         {
             cudaStreamDestroy(cudaStreams[j]);
         }
 
+        
         cudaHostUnregister(&part->x + start_index_batch);
         cudaHostUnregister(&part->y + start_index_batch);
         cudaHostUnregister(&part->z + start_index_batch);

@@ -411,7 +411,7 @@ __global__ void single_particle_kernel(
     int idx = blockIdx.x * blockDim.x + threadIdx.x + stream_offset; 
     int flat_idx = 0;
     
-    if(idx >= npmax)
+    if( (idx - stream_offset) >= npmax)
     {
         return;
     }
