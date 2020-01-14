@@ -85,7 +85,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
     for(i = 0; i < number_of_batches; i++)
     {
-        std::cout << "batch number: " << i << std::endl;
+        std::cout << "  batch number: " << i << std::endl;
 
 
         long int number_of_particles_batch = end_index_batch - start_index_batch + 1; // number of particles in  a batch
@@ -95,8 +95,8 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         
         int flag_leftover = 0;
 
-        std::cout << "num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
-        std::cout << "start_index" << start_index_batch << " end_index : " << end_index_batch << std::endl;
+        std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
+        std::cout << "start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
 
         cudaError_t cudaMallocHostStatus;
 
@@ -155,8 +155,8 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             number_of_particles_stream = end_index_stream - start_index_stream + 1;
             stream_size_per_attribute = number_of_particles_stream * sizeof(FPpart); // for x,y,z,u,v,w
 
-            std::cout << "num_of_particles_stream: " << number_of_particles_stream << "stream_size : " << stream_size_per_attribute << std::endl;
-            std::cout << "start_index" << start_index_stream << " end_index : " << end_index_stream << std::endl;
+            std::cout << "      num_of_particles_stream: " << number_of_particles_stream << "stream_size : " << stream_size_per_attribute << std::endl;
+            std::cout << "      start_index: " << start_index_stream << " end_index: " << end_index_stream << std::endl;
         
             stream_offset = start_index_stream;
             offset = stream_offset + start_index_batch; // batch offset + stream_offset
@@ -169,8 +169,8 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             cudaMemcpyAsync(&w_dev[stream_offset], &part->w[offset], stream_size_per_attribute, cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
             cudaMemcpyAsync(&q_dev[stream_offset], &part->q[offset], number_of_particles_stream * sizeof(FPinterp), cudaMemcpyHostToDevice, cudaStreams[stream_idx]);
 
-            std::cout << "Before loop" << ". Offset:" << offset << ". # of elems:" << number_of_particles_stream
-                      << " Stream index:" << stream_idx << std::endl;
+            std::cout << "      Before loop;" << " Offset: " << offset << " # of elems: " << number_of_particles_stream
+                      << " Stream index: " << stream_idx << std::endl;
 
             // start subcycling
             for (int i_sub=0; i_sub < part->n_sub_cycles; i_sub++){

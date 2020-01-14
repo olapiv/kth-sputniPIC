@@ -6,8 +6,8 @@
 
 size_t queryFreeMemoryOnGPU(void)
 {   
-        size_t free_byte ;
-        size_t total_byte ;
+        size_t free_byte;
+        size_t total_byte;
 
         cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
         if ( cudaSuccess != cuda_status ){
@@ -107,7 +107,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
             cudaMemcpy(y_dev, (part->y + start_index_batch), batch_size, cudaMemcpyHostToDevice);
             cudaMemcpy(z_dev, (part->z + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
             cudaMemcpy(u_dev, (part->u + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
-            cudaMemcpy(v_dev, (part->v +  start_index_batch), batch_size, cudaMemcpyHostToDevice); 
+            cudaMemcpy(v_dev, (part->v + start_index_batch), batch_size, cudaMemcpyHostToDevice); 
             cudaMemcpy(w_dev, (part->w + start_index_batch), batch_size, cudaMemcpyHostToDevice);
             cudaMemcpy(q_dev, (part->q + start_index_batch), number_of_particles_batch * sizeof(FPinterp), cudaMemcpyHostToDevice);
 
@@ -136,12 +136,12 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
 
             // copy memory back to CPU (only the parts that have been modified inside the kernel)
 
-            cudaMemcpy( (part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost);
-            cudaMemcpy( (part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost);
-            cudaMemcpy( (part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost);
-            cudaMemcpy( (part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost);
-            cudaMemcpy( (part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost);
-            cudaMemcpy( (part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy((part->x + start_index_batch), x_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy((part->y + start_index_batch), y_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy((part->z + start_index_batch), z_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy((part->u + start_index_batch), u_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy((part->v + start_index_batch), v_dev, batch_size, cudaMemcpyDeviceToHost);
+            cudaMemcpy((part->w + start_index_batch), w_dev, batch_size, cudaMemcpyDeviceToHost);
 
             cudaFree(x_dev);
             cudaFree(y_dev);
