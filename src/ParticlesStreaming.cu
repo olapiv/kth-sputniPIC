@@ -7,7 +7,6 @@
 #define MAX_NUMBER_OF_STREAMS 5
 #define NUMBER_OF_STREAMS_PER_BATCH 4
 
-
 /** particle mover for GPU with batching */
 
 int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
@@ -105,7 +104,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
         if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
         {
-            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH + 1;
         }
         else
         {
@@ -175,7 +174,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
             else
             {
                 end_index_stream += max_num_particles_per_stream;
-            } 
+            }
 
         }
 
@@ -375,7 +374,7 @@ void interpP2G_GPU_stream(struct particles* part, struct interpDensSpecies* ids,
             else
             {
                 end_index_stream += max_num_particles_per_stream;
-            } 
+            }
 
         }
 

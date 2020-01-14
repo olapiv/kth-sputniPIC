@@ -85,7 +85,7 @@ int main(int argc, char **argv){
     // allocation
     for (int is=0; is < param.ns; is++){
         particle_allocate(&param,&partCPU[is],is);
-        particle_allocate(&param,&partGPU[is],is, true);
+        particle_allocate(&param,&partGPU[is],is);
     }
     
     // Initialization
@@ -158,18 +158,18 @@ int main(int argc, char **argv){
         setZeroDensities(&idnGPU,idsGPU,&grd,param.ns);
 
         // Everything at once:
-        for (int is=0; is < param.ns; is++) {
+        /*for (int is=0; is < param.ns; is++) {
 
-            //mover_AND_interpP2G_stream(&partGPU[is], &fieldGPU, &grd, &param, &idsGPU[is]);
+            mover_AND_interpP2G_stream(&partGPU[is], &fieldGPU, &grd, &param, &idsGPU[is]);
 
-        }
+        }*/
         
         // implicit mover
         iMoverGPU = cpuSecond(); // start timer for mover
         for (int is=0; is < param.ns; is++) {
-            // mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
-            // mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
-            mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
+            mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
+            //mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
+            //mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
         }
         eMoverGPU += (cpuSecond() - iMoverGPU); // stop timer for mover
         
@@ -177,8 +177,8 @@ int main(int argc, char **argv){
         iInterpGPU = cpuSecond(); // start timer for the interpolation step
         // interpolate species
         for (int is=0; is < param.ns; is++) {
-            // interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
-            interpP2G_GPU_stream(&partGPU[is],&idsGPU[is],&grd);
+            interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
+            //interpP2G_GPU_stream(&partGPU[is],&idsGPU[is],&grd);
             //interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
         }
         // apply BC to interpolated densities
@@ -226,7 +226,7 @@ int main(int argc, char **argv){
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
         interp_dens_species_deallocate(&grd,&idsGPU[is]);
-        particle_deallocate(&partGPU[is], true);
+        particle_deallocate(&partGPU[is]);
     }
     
     // stop timer

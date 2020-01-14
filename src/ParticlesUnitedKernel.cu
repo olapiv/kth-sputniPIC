@@ -30,7 +30,7 @@ __global__ void united_kernel(
 ){
     
     int idx = blockIdx.x * blockDim.x + threadIdx.x + stream_offset; 
-    if(idx >= npmax)
+    if( (idx - stream_offset) >= npmax)
     {
         return;
     }
@@ -483,14 +483,14 @@ void mover_AND_interpP2G_stream(
     {
         start_index_batch = 0;
         end_index_batch = start_index_batch + NUMBER_OF_PARTICLES_PER_BATCH - 1; // NUM_PARTICLES_PER_BATCH is a hyperparameter set by tuning
-        //if(part->npmax % NUMBER_OF_PARTICLES_PER_BATCH != 0)
-        //{
-            number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH + 1; // works because of integer division
-        //}
-        /*else
+        if(part->npmax % NUMBER_OF_PARTICLES_PER_BATCH != 0)
         {
-        //    number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH;
-        }*/
+            number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH + 1; // works because of integer division
+        }
+        else
+        {
+            number_of_batches = part->npmax / NUMBER_OF_PARTICLES_PER_BATCH;
+        }
     }
 
 
@@ -508,16 +508,6 @@ void mover_AND_interpP2G_stream(
         //std::cout << "  num_of_particles_batch: " << number_of_particles_batch << " batch_size : " << batch_size_per_attribute << std::endl;
         //std::cout << "  start_index: " << start_index_batch << " end_index: " << end_index_batch << std::endl;
 
-        /*
-            if (cudaMallocHostStatus != cudaSuccess) {
-                printf("Error allocating pinned host memory\n");
-                cudaDeviceSynchronize();
-                cudaError_t status = cudaMallocHost(&&(part->y[start_index_batch]), batch_size_per_attribute);
-                if (status != cudaSuccess) {
-                    exit(1);
-                }
-            }*/
-
         cudaMalloc(&x_dev, batch_size_per_attribute);
         cudaMalloc(&y_dev, batch_size_per_attribute);
         cudaMalloc(&z_dev, batch_size_per_attribute);
@@ -530,14 +520,14 @@ void mover_AND_interpP2G_stream(
         end_index_stream = start_index_stream + (number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH) - 1;
         max_num_particles_per_stream = number_of_particles_batch / NUMBER_OF_STREAMS_PER_BATCH;            
 
-        //if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
-        //{
-            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-        //}
-        //else
-        //{
-        //   number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
-        //}
+        if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
+        {
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH + 1;
+        }
+        else
+        {
+           number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
+        }
 
         for (int j = 0; j < number_of_streams; j++)
         {
@@ -568,7 +558,7 @@ void mover_AND_interpP2G_stream(
             //       << " Stream index: " << stream_idx << std::endl;
 
             // Call GPU kernel
-            united_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB, 0 , cudaStreams[stream_idx]>>>(
+            united_kernel<<<(number_of_particles_stream + TPB - 1)/TPB, TPB, 0, cudaStreams[stream_idx]>>>(
                 x_dev, y_dev, z_dev, u_dev, v_dev, w_dev, q_dev, 
                 XN_flat_dev, YN_flat_dev, ZN_flat_dev, 
                 grd->nxn, grd->nyn, grd->nzn, 
