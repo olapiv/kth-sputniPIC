@@ -76,10 +76,10 @@ __global__ void single_particle_kernel(
 
 
 /** allocate particle arrays */
-void particle_allocate(struct parameters*, struct particles*, int);
+void particle_allocate(struct parameters*, struct particles*, int, bool use_pinned_memory = false);
 
 /** deallocate */
-void particle_deallocate(struct particles*);
+void particle_deallocate(struct particles*, bool use_pinned_memory = false);
 
 /** particle mover */
 int mover_PC(struct particles*, struct EMfield*, struct grid*, struct parameters*);

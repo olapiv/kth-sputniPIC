@@ -119,7 +119,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         cudaMalloc(&q_dev, number_of_particles_batch * sizeof(FPinterp));
 
         // pin memory for async copy
-        
+        /*
         FPpart *x_pinned = NULL, *y_pinned = NULL, *z_pinned = NULL, *u_pinned = NULL, *v_pinned = NULL, *w_pinned = NULL;
         FPinterp * q_pinned = NULL;
         
@@ -144,7 +144,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         memcpy(q_pinned, &part->q + start_index_batch, number_of_particles_batch * sizeof(FPinterp));
         cudaMallocHostStatus = cudaHostAlloc((void**)&q_pinned, batch_size_per_attribute,  cudaHostRegisterPortable);
 
-        /*cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
+        cudaHostRegister(&part->x + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
         cudaMallocHostStatus = cudaHostRegister(&part->y + start_index_batch, batch_size_per_attribute, cudaHostRegisterMapped);
 
         memcpy(x_pinned, &part->x + start_index_batch, batch_size_per_attribute);
@@ -161,7 +161,7 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
 
         if(number_of_particles_batch % NUMBER_OF_STREAMS_PER_BATCH != 0) // We have some leftover bytes
         {
-            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH + 1;
+            number_of_streams = NUMBER_OF_STREAMS_PER_BATCH;
             flag_leftover = 1;
         }
         else
@@ -251,13 +251,13 @@ int mover_GPU_stream(struct particles* part, struct EMfield* field, struct grid*
         cudaHostUnregister(&part->w + start_index_batch);
         cudaHostUnregister(&part->q + start_index_batch);*/
 
-        cudaFreeHost(x_pinned);
+        /*cudaFreeHost(x_pinned);
         cudaFreeHost(y_pinned);
         cudaFreeHost(z_pinned);
         cudaFreeHost(u_pinned);
         cudaFreeHost(v_pinned);
         cudaFreeHost(w_pinned);
-        cudaFreeHost(q_pinned);
+        cudaFreeHost(q_pinned);*/
 
         cudaFree(x_dev);
         cudaFree(y_dev);

@@ -85,7 +85,7 @@ int main(int argc, char **argv){
     // allocation
     for (int is=0; is < param.ns; is++){
         particle_allocate(&param,&partCPU[is],is);
-        particle_allocate(&param,&partGPU[is],is);
+        particle_allocate(&param,&partGPU[is],is, true);
     }
     
     // Initialization
@@ -159,7 +159,7 @@ int main(int argc, char **argv){
 
         // Everything at once:
         for (int is=0; is < param.ns; is++) {
-            mover_AND_interpP2G_stream(&partGPU[is], &fieldGPU, &grd, &param, &idsGPU[is]);
+            //mover_AND_interpP2G_stream(&partGPU[is], &fieldGPU, &grd, &param, &idsGPU[is]);
         }
         
         // implicit mover
@@ -167,7 +167,7 @@ int main(int argc, char **argv){
         for (int is=0; is < param.ns; is++) {
             // mover_PC_GPU_basic(&partGPU[is],&fieldGPU,&grd,&param);
             // mover_GPU_batch(&partGPU[is],&fieldGPU,&grd,&param);
-            // mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
+             mover_GPU_stream(&partGPU[is],&fieldGPU,&grd,&param);
         }
         eMoverGPU += (cpuSecond() - iMoverGPU); // stop timer for mover
         
@@ -176,7 +176,7 @@ int main(int argc, char **argv){
         // interpolate species
         for (int is=0; is < param.ns; is++) {
             // interpP2G_GPU_basic(&partGPU[is],&idsGPU[is],&grd);
-            // interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
+             interpP2G_GPU_batch(&partGPU[is],&idsGPU[is],&grd);
             //interpP2G_GPU_stream(&partGPU[is],&idsGPU[is],&grd);
         }
         // apply BC to interpolated densities
@@ -224,7 +224,7 @@ int main(int argc, char **argv){
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
         interp_dens_species_deallocate(&grd,&idsGPU[is]);
-        particle_deallocate(&partGPU[is]);
+        particle_deallocate(&partGPU[is], true);
     }
     
     // stop timer
