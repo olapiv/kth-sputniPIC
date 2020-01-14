@@ -34,4 +34,13 @@ __global__ void united_kernel(
     FPinterp* pxx_flat, FPinterp* pxy_flat, FPinterp* pxz_flat, FPinterp* pyy_flat, FPinterp* pyz_flat, FPinterp* pzz_flat
 );
 
+/** particle mover for GPU without batching*/
+int mover_AND_interpP2G_stream(
+    struct particles* part, 
+    struct EMfield* field, 
+    struct grid* grd, 
+    struct parameters* param,
+    struct interpDensSpecies* ids
+);
+
 #endif
