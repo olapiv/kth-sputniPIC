@@ -127,7 +127,7 @@ int mover_GPU_batch(struct particles* part, struct EMfield* field, struct grid* 
                     param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
                     dt_sub_cycling, dto2, qomdt2, 
                     part->NiterMover, 
-                    number_of_particles_batch
+                    number_of_particles_batch, 0
                 );
                 cudaDeviceSynchronize();
 

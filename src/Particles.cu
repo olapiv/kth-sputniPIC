@@ -637,7 +637,7 @@ int mover_PC_GPU_basic(struct particles* part, struct EMfield* field, struct gri
             Ex_flat_dev, Ey_flat_dev, Ez_flat_dev, Bxn_flat_dev, Byn_flat_dev, Bzn_flat_dev, 
             param->PERIODICX, param->PERIODICY, param->PERIODICZ, 
             dt_sub_cycling, dto2, qomdt2, 
-            part->NiterMover, part->nop
+            part->NiterMover, part->nop, 0
         );
 
         cudaDeviceSynchronize();
