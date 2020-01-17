@@ -2,7 +2,8 @@
 
 ## About
 
-This is the final project for the KTH course [Applied GPU Programming](https://www.kth.se/student/kurser/kurs/DD2360?l=en). All other assignments to this course can be seen [here](kth-applied-gpu-programming/blob/master/README.md).
+This is the final project for the KTH course [Applied GPU Programming](https://www.kth.se/student/kurser/kurs/DD2360?l=en). All other assignments to this course can be seen [here](https://github.com/olapiv/kth-applied-gpu-programming).
+
 
 This project provides a Particle-In-Cell (PIC) code-base, which simulates the movement of particles within an electromagnetic field. In simple terms, throughout multiple iterations, first the influence of the electromagnetic field is calculated upon particle positions & velocities and then the positions of the particles are used to calculate the accumulated charge, current and pressure along the grid. The first step is referenced as mover_pc (particle mover), whilst the second step is referred to as interpP2G (particle to grid interpolation). In a typical PIC calculation, one will also find a “fields solver” functionality, which essentially recalculates the electromagnetic field according to the movements of the particles. In our project, this is however assumed as constant for the sake of simplicity.
 
