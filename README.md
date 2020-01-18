@@ -11,21 +11,21 @@ The skeleton of this code is derived from the open source project [iPIC3D](​ht
 
 ## Cuda Implementation Steps
 
-1. Porting mover_pc and interpP2G to GPU (Grade D)
+1. **Grade D**: Porting mover_pc and interpP2G to GPU
 
     The first basic step to take is to rewrite the central loop of mover_pc and interpP2G, which iterates over part->nop (number of particles). We extract these loops to separated device kernels “single_particle_kernel” and "interP2G_kernel", which also provide the basis of our future steps. Both kernels are called with an arbitrary 64 threads per block, whereby our blocks only have one dimension. Within the kernels we can now calculate the thread index and replace the iteration variable referring to the number-of-particles-loop with this value. This is required to obtain the coordinates and the velocities of the particles, which are given in 1D arrays (x_flat, etc.).
 
     * All written code for this can be seen in [Particles.cu](src/Particles.cu)
     * The code is executed by calling mover_GPU_basic and interpP2G_GPU_basic in [sputniPIC.cpp](src/sputniPIC.cpp).
 
-2. Mini-batching GPU code (Grade C)
+2. **Grade C**: Mini-batching GPU code
 
     This is done to handle a large number of particles, which would potentially not fit onto the GPU memory. In our implementation, we first allocate and copy over the data that is needed for all particles: for mover_pc, the grid & field and for interpP2G, the “densities”. This common data is assumed to fit into  GPU memory without the need for splitting into batches. Then, we check how much free memory is left on the GPU and whether it is less than the amount of memory needed for all particles to be copied over. If so, for the sake of simplicity, we decided for an arbitrary number of particles to be copied over per iteration and divide the total number of particles by this value to obtain the number of required batches. The number of particles is a hyperparameter which can be tuned according to the graphics card being used. In general, we found that larger batch sizes were quicker than using multiple smaller ones.
 
     * All written code for this can be seen in [ParticlesBatching.cu](src/ParticlesBatching.cu).
     * The code is run by calling mover_GPU_batch and interpP2G_GPU_batch in [sputniPIC.cpp](src/sputniPIC.cpp).
 
-3. Pinned memory, streams and asynchronous memory copying (Grade B)
+3. **Grade B**: Pinned memory, streams and asynchronous memory copying
 
     The purpose of asynchronous copying in relation to streams is that copying data to the GPU (in one stream) can be done concurrently to launching a kernel (in another stream). To do so, the data is required to be split up between the streams. Since asynchronous copying however requires the data on the CPU to be pinned, this method may not be effective in case not enough pinnable memory is available.
 
@@ -34,7 +34,7 @@ The skeleton of this code is derived from the open source project [iPIC3D](​ht
     * All written code for this can be seen in [ParticlesStreaming.cu](src/ParticlesStreaming.cu).
     * The code is run by calling mover_GPU_stream and interpP2G_GPU_stream in [sputniPIC.cpp](src/sputniPIC.cpp).
 
-4. Pinned memory, streams and asynchronous memory copying (Grade A)
+4. **Grade A**: Combining mover_pc and interpP2G into single kernel
 
     For this step we created a new kernel called "united_kernel", which in essence executes mover_pc and interpP2G in sequence. However, the loop for number of cycles in the mover_pc is moved into the kernel, since one cycle affects the next cycle. Generally, we were also able to copy all other code from ParticlesStreaming.cu, which was called before and after the respective kernel calls. This meant that the field and the densities are moved entirely to and from the device before and after united_kernel is called.
 
